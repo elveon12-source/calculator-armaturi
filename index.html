@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator Armături | Etrieri • Agrafe • Arcade • Profile U • Bare</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="Calculator profesional pentru armături metalice (Etrieri, Agrafe, Arcade, Profile U, Bare). Format Windows Desktop, calcule instantanee și export Excel profesional.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=7">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header" id="appHeader">
+        <div class="header-inner">
+            <div class="logo-group">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="4" width="32" height="32" rx="8" stroke="currentColor" stroke-width="2.5"/>
+                        <line x1="12" y1="12" x2="28" y2="28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="12" y1="28" x2="28" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Calculator Armături</h1>
+                    <span class="logo-tagline">Etrieri • Agrafe • Arcade • Profile U • Bare</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="price-global">
+                    <label>Preț/kg (lei):</label>
+                    <input type="number" id="pretKg" value="5.50" step="0.10" onchange="recalcAll()">
+                </div>
+                <button class="btn-export" id="btnExportAll" onclick="exportAllToExcel()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export Excel
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-nav" id="tabNav">
+        <div class="tab-nav-inner">
+            <button class="tab-btn active" data-tab="etrieri" id="tabEtrieri">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Etrieri</span>
+            </button>
+            <button class="tab-btn" data-tab="agrafe" id="tabAgrafe">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 10h16"/><path d="M10 16h4"/><path d="M20 10c0 3-3 6-8 6s-8-3-8-6a8 8 0 0 1 16 0z"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Agrafe</span>
+            </button>
+            <button class="tab-btn" data-tab="arcade" id="tabArcade">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 21v-7a8 8 0 1 1 16 0v7"/><path d="M4 21h16"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Arcade</span>
+            </button>
+            <button class="tab-btn" data-tab="profileU" id="tabProfileU">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3v18h8V3"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Profile U</span>
+            </button>
+            <button class="tab-btn" data-tab="bare" id="tabBare">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="2" y1="12" x2="22" y2="12"/><path d="m18 8 4 4-4 4"/><path d="m6 8-4 4 4 4"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Bare Drepte</span>
+            </button>
+            <button class="tab-btn" data-tab="sarma" id="tabSarma">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4c6 0 6 16 12 16s6-16 12-16" stroke-linecap="round"/>
+                        <circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Sârmă</span>
+            </button>
+            <button class="tab-btn" data-tab="tabla" id="tabTabla">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 18V6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2z" />
+                        <line x1="4" y1="10" x2="20" y2="10" />
+                        <line x1="4" y1="14" x2="20" y2="14" />
+                    </svg>
+                </span>
+                <span class="tab-label">Tablă</span>
+            </button>
+            <button class="tab-btn" data-tab="cornier" id="tabCornier">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 6v12h12"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Cornier</span>
+            </button>
+            <div class="tab-indicator" id="tabIndicator"></div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- ==================== ETRIERI TAB ==================== -->
+        <section class="tab-panel active" id="panel-etrieri">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header">
+                        <h3>Schiță Etrier</h3>
+                        <span class="badge badge-blue">Vizualizare</span>
+                    </div>
+                    <div class="diagram-container" id="diagramEtrier">
+                        <svg viewBox="0 0 400 320" class="diagram-svg">
+                            <defs>
+                                <pattern id="gridEtrier" width="20" height="20" patternUnits="userSpaceOnUse">
+                                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
+                                </pattern>
+                                <linearGradient id="barGradEtrier" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#2563eb"/>
+                                    <stop offset="100%" stop-color="#3b82f6"/>
+                                </linearGradient>
+                                <filter id="glowEtrier">
+                                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
+                            </defs>
+                            <rect width="400" height="320" fill="url(#gridEtrier)"/>
+                            <rect x="100" y="60" width="200" height="160" rx="4" fill="none" stroke="url(#barGradEtrier)" stroke-width="5" stroke-linejoin="round" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <line x1="100" y1="60" x2="130" y2="100" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw-delay"/>
+                            <line x1="100" y1="60" x2="80" y2="95" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw-delay"/>
+                            <line x1="100" y1="40" x2="300" y2="40" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="100" y1="35" x2="100" y2="45" stroke="#f87171" stroke-width="1.5"/>
+                            <line x1="300" y1="35" x2="300" y2="45" stroke="#f87171" stroke-width="1.5"/>
+                            <text x="200" y="32" text-anchor="middle" fill="#f87171" font-size="15" font-weight="700" font-family="JetBrains Mono">A = <tspan id="dimEtrierA">25</tspan> cm</text>
+                            <line x1="320" y1="60" x2="320" y2="220" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="315" y1="60" x2="325" y2="60" stroke="#34d399" stroke-width="1.5"/>
+                            <line x1="315" y1="220" x2="325" y2="220" stroke="#34d399" stroke-width="1.5"/>
+                            <text x="340" y="145" text-anchor="start" fill="#34d399" font-size="15" font-weight="700" font-family="JetBrains Mono">B = <tspan id="dimEtrierB">40</tspan> cm</text>
+                            <text x="65" y="108" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="600" font-family="Inter">Ciocuri</text>
+                            <text x="65" y="123" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700" font-family="JetBrains Mono"><tspan id="dimEtrierCioc">10</tspan> cm</text>
+                            <text x="200" y="300" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="13" font-weight="500" font-family="Inter">Ø<tspan id="dimEtrierDiam">8</tspan> mm</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Etrier</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formEtrieri" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="etrMarca">Marcaj (Marca)</label><input type="text" id="etrMarca" placeholder="Ex: E1, Grinda 1..." oninput="calcEtrieri()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="etrDiam">Diametru (mm)</label>
+                                <select id="etrDiam" onchange="calcEtrieri()"><option value="6">Ø6</option><option value="8" selected>Ø8</option><option value="10">Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
+                            <div class="form-group"><label for="etrClasa">Clasă Oțel</label>
+                                <select id="etrClasa" onchange="calcEtrieri()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="etrA">Latura A (cm)</label><input type="number" id="etrA" value="25" min="1" step="0.5" oninput="calcEtrieri()"></div>
+                            <div class="form-group"><label for="etrB">Latura B (cm)</label><input type="number" id="etrB" value="40" min="1" step="0.5" oninput="calcEtrieri()"></div>
+                            <div class="form-group"><label for="etrCioc">Ciocuri (cm)</label><input type="number" id="etrCioc" value="10" min="1" step="0.5" oninput="calcEtrieri()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="etrBuc">Nr. Bucăți</label><input type="number" id="etrBuc" value="50" min="1" step="1" oninput="calcEtrieri()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsEtrieri">
+                        <div class="result-card">
+                            <span class="result-label">L/buc</span>
+                            <span class="result-value" id="etrLungBuc">1.50</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">L.tot</span>
+                            <span class="result-value" id="etrLungTot">75.00</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="etrGSp">0.395</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="etrGTot">29.63</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="etrPret">133.33</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Etrieri</h3><button class="btn-add" onclick="addRow('etrieri')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableEtrieri">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Ø</th><th>Clasă</th><th>A</th><th>B</th><th>Cioc</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodyEtrieri"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="9">TOTAL</td><td id="totalEtrLung">-</td><td></td><td id="totalEtrGreut">-</td><td id="totalEtrPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <div id="diamSummaryEtrieri" class="diam-summary"></div>
+            </div>
+        </section>
+
+        <!-- ==================== AGRAFE TAB ==================== -->
+        <section class="tab-panel" id="panel-agrafe">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header"><h3>Schiță Agrafă</h3><span class="badge badge-blue">Vizualizare</span></div>
+                    <div class="diagram-container" id="diagramAgrafa">
+                        <svg viewBox="0 0 400 280" class="diagram-svg">
+                            <defs>
+                                <pattern id="gridAgrafa" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/></pattern>
+                                <linearGradient id="barGradAgrafa" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#2563eb"/></linearGradient>
+                            </defs>
+                            <rect width="400" height="280" fill="url(#gridAgrafa)"/>
+                            <line x1="80" y1="150" x2="320" y2="150" stroke="url(#barGradAgrafa)" stroke-width="5" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <line x1="80" y1="150" x2="60" y2="110" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw-delay"/>
+                            <line x1="320" y1="150" x2="340" y2="110" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw-delay"/>
+                            <line x1="80" y1="180" x2="320" y2="180" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="80" y1="175" x2="80" y2="185" stroke="#f87171" stroke-width="1.5"/>
+                            <line x1="320" y1="175" x2="320" y2="185" stroke="#f87171" stroke-width="1.5"/>
+                            <text x="200" y="200" text-anchor="middle" fill="#f87171" font-size="15" font-weight="700" font-family="JetBrains Mono">L = <tspan id="dimAgrafaL">25</tspan> cm</text>
+                            <text x="45" y="100" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="600" font-family="Inter">Cioc</text>
+                            <text x="45" y="115" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700" font-family="JetBrains Mono"><tspan id="dimAgrafaCioc">10</tspan> cm</text>
+                            <text x="355" y="100" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="600" font-family="Inter">Cioc</text>
+                            <text x="355" y="115" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700" font-family="JetBrains Mono"><tspan id="dimAgrafaCioc2">10</tspan> cm</text>
+                            <text x="200" y="260" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="13" font-weight="500" font-family="Inter">Ø<tspan id="dimAgrafaDiam">8</tspan> mm</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Agrafă</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formAgrafe" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="agrMarca">Marcaj (Marca)</label><input type="text" id="agrMarca" placeholder="Ex: A1, Radier..." oninput="calcAgrafe()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="agrDiam">Diametru (mm)</label><select id="agrDiam" onchange="calcAgrafe()"><option value="6">Ø6</option><option value="8" selected>Ø8</option><option value="10">Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
+                            <div class="form-group"><label for="agrClasa">Clasă Oțel</label><select id="agrClasa" onchange="calcAgrafe()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="agrL">Lungime L (cm)</label><input type="number" id="agrL" value="25" min="1" step="0.5" oninput="calcAgrafe()"></div>
+                            <div class="form-group"><label for="agrCioc">Cioc (cm)</label><input type="number" id="agrCioc" value="10" min="1" step="0.5" oninput="calcAgrafe()"></div>
+                            <div class="form-group"><label for="agrBuc">Nr. Bucăți</label><input type="number" id="agrBuc" value="30" min="1" step="1" oninput="calcAgrafe()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsAgrafe">
+                        <div class="result-card">
+                            <span class="result-label">L/buc</span>
+                            <span class="result-value" id="agrLungBuc">0.45</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">L.tot</span>
+                            <span class="result-value" id="agrLungTot">13.50</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="agrGSp">0.395</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="agrGTot">5.33</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="agrPret">24.00</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Agrafe</h3><button class="btn-add" onclick="addRow('agrafe')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableAgrafe">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Ø</th><th>Clasă</th><th>L</th><th>Cioc</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodyAgrafe"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="8">TOTAL</td><td id="totalAgrLung">-</td><td></td><td id="totalAgrGreut">-</td><td id="totalAgrPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <div id="diamSummaryAgrafe" class="diam-summary"></div>
+            </div>
+        </section>
+
+        <!-- ==================== ARCADE TAB ==================== -->
+        <section class="tab-panel" id="panel-arcade">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header"><h3>Schiță Arcadă Semi-rotund</h3><span class="badge badge-blue">Vizualizare</span></div>
+                    <div class="diagram-container" id="diagramArcada">
+                        <svg viewBox="0 0 400 340" class="diagram-svg">
+                            <defs>
+                                <pattern id="gridArcada" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/></pattern>
+                                <linearGradient id="barGradArcada" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient>
+                            </defs>
+                            <rect width="400" height="340" fill="url(#gridArcada)"/>
+                            
+                            <!-- Left leg -->
+                            <line x1="110" y1="280" x2="110" y2="140" stroke="url(#barGradArcada)" stroke-width="5" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <!-- Right leg -->
+                            <line x1="290" y1="280" x2="290" y2="140" stroke="url(#barGradArcada)" stroke-width="5" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <!-- Semicircle arc -->
+                            <path d="M110,140 A90,90 0 0,1 290,140" fill="none" stroke="url(#barGradArcada)" stroke-width="5" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw"/>
+                            
+                            <!-- Dim D (width/deschidere) -->
+                            <line x1="110" y1="300" x2="290" y2="300" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="110" y1="295" x2="110" y2="305" stroke="#34d399" stroke-width="1.5"/>
+                            <line x1="290" y1="295" x2="290" y2="305" stroke="#34d399" stroke-width="1.5"/>
+                            <text x="200" y="322" text-anchor="middle" fill="#34d399" font-size="15" font-weight="700" font-family="JetBrains Mono">D = <tspan id="dimArcadaD">60</tspan> cm</text>
+                            
+                            <!-- Dim H (height of legs) -->
+                            <line x1="80" y1="140" x2="80" y2="280" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="75" y1="140" x2="85" y2="140" stroke="#f87171" stroke-width="1.5"/>
+                            <line x1="75" y1="280" x2="85" y2="280" stroke="#f87171" stroke-width="1.5"/>
+                            <text x="58" y="215" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700" font-family="JetBrains Mono" transform="rotate(-90, 58, 215)">H = <tspan id="dimArcadaH">40</tspan> cm</text>
+                            
+                            <!-- Arc label -->
+                            <text x="200" y="75" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="600" font-family="Inter">Arc = π×D/2</text>
+                            
+                        <text x="200" y="30" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="13" font-weight="500" font-family="Inter">Ø<tspan id="dimArcadaDiam">10</tspan> mm</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Arcadă</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formArcade" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="arcMarca">Marcaj (Marca)</label><input type="text" id="arcMarca" placeholder="Ex: Arc.1, Boltă..." oninput="calcArcade()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="arcDiam">Diametru (mm)</label><select id="arcDiam" onchange="calcArcade()"><option value="6">Ø6</option><option value="8">Ø8</option><option value="10" selected>Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
+                            <div class="form-group"><label for="arcClasa">Clasă Oțel</label><select id="arcClasa" onchange="calcArcade()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="arcD">Deschidere D (cm)</label><input type="number" id="arcD" value="60" min="1" step="0.5" oninput="calcArcade()"></div>
+                            <div class="form-group"><label for="arcH">Înălțime H (cm)</label><input type="number" id="arcH" value="40" min="1" step="0.5" oninput="calcArcade()"></div>
+                            <div class="form-group"><label for="arcBuc">Nr. Bucăți</label><input type="number" id="arcBuc" value="20" min="1" step="1" oninput="calcArcade()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsArcade">
+                        <div class="result-card">
+                            <span class="result-label">L/buc</span>
+                            <span class="result-value" id="arcLungBuc">1.74</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">L.tot</span>
+                            <span class="result-value" id="arcLungTot">34.85</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="arcGSp">0.617</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="arcGTot">21.50</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">H.Mijloc</span>
+                            <span class="result-value" id="arcHMid">70.00</span>
+                            <span class="result-unit">cm</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="arcPret">96.75</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Arcade</h3><button class="btn-add" onclick="addRow('arcade')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableArcade">
+                            <thead><tr><th>Nr.</th><th>Marcă</th><th>Ø</th><th>Clasă</th><th>D</th><th>H</th><th>H.Mijloc</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                            <tbody id="tbodyArcade"></tbody>
+                            <tfoot><tr class="total-row"><td colspan="8">TOTAL</td><td id="totalArcLung">-</td><td></td><td id="totalArcGreut">-</td><td id="totalArcPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <div id="diamSummaryArcade" class="diam-summary"></div>
+            </div>
+        </section>
+
+        <!-- ==================== PROFILE U TAB ==================== -->
+        <section class="tab-panel" id="panel-profileU">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header"><h3>Schiță Profil U</h3><span class="badge badge-blue">Vizualizare</span></div>
+                    <div class="diagram-container" id="diagramProfilU">
+                        <svg viewBox="0 0 400 320" class="diagram-svg">
+                            <defs>
+                                <pattern id="gridU" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/></pattern>
+                                <linearGradient id="barGradU" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#2563eb"/></linearGradient>
+                            </defs>
+                            <rect width="400" height="320" fill="url(#gridU)"/>
+                            <polyline points="100,60 100,240 300,240 300,60" fill="none" stroke="url(#barGradU)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <line x1="70" y1="60" x2="70" y2="240" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="65" y1="60" x2="75" y2="60" stroke="#f87171" stroke-width="1.5"/>
+                            <line x1="65" y1="240" x2="75" y2="240" stroke="#f87171" stroke-width="1.5"/>
+                            <text x="50" y="155" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700" font-family="JetBrains Mono" transform="rotate(-90, 50, 155)">A = <tspan id="dimProfilUA">20</tspan> cm</text>
+                            <line x1="100" y1="265" x2="300" y2="265" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="100" y1="260" x2="100" y2="270" stroke="#34d399" stroke-width="1.5"/>
+                            <line x1="300" y1="260" x2="300" y2="270" stroke="#34d399" stroke-width="1.5"/>
+                            <text x="200" y="288" text-anchor="middle" fill="#34d399" font-size="15" font-weight="700" font-family="JetBrains Mono">B = <tspan id="dimProfilUB">100</tspan> cm</text>
+                            <line x1="330" y1="60" x2="330" y2="240" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="325" y1="60" x2="335" y2="60" stroke="#a78bfa" stroke-width="1.5"/>
+                            <line x1="325" y1="240" x2="335" y2="240" stroke="#a78bfa" stroke-width="1.5"/>
+                            <text x="355" y="155" text-anchor="middle" fill="#a78bfa" font-size="14" font-weight="700" font-family="JetBrains Mono" transform="rotate(90, 355, 155)">C = <tspan id="dimProfilUC">20</tspan> cm</text>
+                        <text x="200" y="310" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="13" font-weight="500" font-family="Inter">Ø<tspan id="dimProfilUDiam">10</tspan> mm</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Profil U</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formProfileU" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="profUMarca">Marcaj (Marca)</label><input type="text" id="profUMarca" placeholder="Ex: U1, Centură..." oninput="calcProfileU()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="profUDiam">Diametru (mm)</label><select id="profUDiam" onchange="calcProfileU()"><option value="6">Ø6</option><option value="8">Ø8</option><option value="10" selected>Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
+                            <div class="form-group"><label for="profUClasa">Clasă Oțel</label><select id="profUClasa" onchange="calcProfileU()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="profUA">Latura A (cm)</label><input type="number" id="profUA" value="20" min="1" step="0.5" oninput="calcProfileU()"></div>
+                            <div class="form-group"><label for="profUB">Latura B (cm)</label><input type="number" id="profUB" value="100" min="1" step="0.5" oninput="calcProfileU()"></div>
+                            <div class="form-group"><label for="profUC">Latura C (cm)</label><input type="number" id="profUC" value="20" min="1" step="0.5" oninput="calcProfileU()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="profUBuc">Nr. Bucăți</label><input type="number" id="profUBuc" value="20" min="1" step="1" oninput="calcProfileU()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsProfileU">
+                        <div class="result-card">
+                            <span class="result-label">L/buc</span>
+                            <span class="result-value" id="profilULungBuc">1.40</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">L.tot</span>
+                            <span class="result-value" id="profilULungTot">28.00</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="profilUGSp">0.617</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="profilUGTot">17.28</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="profilUPret">77.76</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Profile U</h3><button class="btn-add" onclick="addRow('profileU')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableProfileU">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Ø</th><th>Clasă</th><th>A</th><th>B</th><th>C</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodyProfileU"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="9">TOTAL</td><td id="totalProfilULung">-</td><td></td><td id="totalProfilUGreut">-</td><td id="totalProfilUPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <div id="diamSummaryProfileU" class="diam-summary"></div>
+            </div>
+        </section>
+
+        <!-- ==================== BARE DREPTE TAB ==================== -->
+        <section class="tab-panel" id="panel-bare">
+            <!-- existing Bare Drepte content... -->
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header"><h3>Schiță Bară Dreaptă</h3><span class="badge badge-blue">Vizualizare</span></div>
+                    <div class="diagram-container" id="diagramBara">
+                        <svg viewBox="0 0 400 220" class="diagram-svg">
+                            <defs>
+                                <pattern id="gridBara" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/></pattern>
+                                <linearGradient id="barGradBara" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#f87171"/></linearGradient>
+                            </defs>
+                            <rect width="400" height="220" fill="url(#gridBara)"/>
+                            <line x1="50" y1="100" x2="350" y2="100" stroke="url(#barGradBara)" stroke-width="6" stroke-linecap="round" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <circle cx="50" cy="100" r="6" fill="#fb923c" opacity="0.6"/>
+                            <circle cx="350" cy="100" r="6" fill="#f87171" opacity="0.6"/>
+                            <line x1="50" y1="135" x2="350" y2="135" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="50" y1="130" x2="50" y2="140" stroke="#f87171" stroke-width="1.5"/>
+                            <line x1="350" y1="130" x2="350" y2="140" stroke="#f87171" stroke-width="1.5"/>
+                            <text x="200" y="160" text-anchor="middle" fill="#f87171" font-size="16" font-weight="700" font-family="JetBrains Mono">L = <tspan id="dimBaraL">500</tspan> cm</text>
+                            <text x="200" y="200" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="13" font-weight="500" font-family="Inter">Ø<tspan id="dimBaraDiam">16</tspan> mm</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Bară Dreaptă</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formBare" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="barMarca">Marcaj (Marca)</label><input type="text" id="barMarca" placeholder="Ex: B1, Longitudinal..." oninput="calcBare()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="barDiam">Diametru (mm)</label><select id="barDiam" onchange="calcBare()"><option value="6">Ø6</option><option value="8">Ø8</option><option value="10">Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16" selected>Ø16</option></select></div>
+                            <div class="form-group"><label for="barClasa">Clasă Oțel</label><select id="barClasa" onchange="calcBare()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half-width"><label for="barL">Lungime (cm)</label><input type="number" id="barL" value="500" min="1" step="0.5" oninput="calcBare()"></div>
+                            <div class="form-group half-width"><label for="barBuc">Nr. Bucăți</label><input type="number" id="barBuc" value="10" min="1" step="1" oninput="calcBare()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsBare">
+                        <div class="result-card">
+                            <span class="result-label">L/buc</span>
+                            <span class="result-value" id="barLungBuc">5.00</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">L.tot</span>
+                            <span class="result-value" id="barLungTot">50.00</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="barGSp">1.578</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="barGTot">78.91</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="barPret">355.10</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Bare Drepte</h3><button class="btn-add" onclick="addRow('bare')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableBare">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Ø</th><th>Clasă</th><th>L</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodyBare"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="7">TOTAL</td><td id="totalBarLung">-</td><td></td><td id="totalBarGreut">-</td><td id="totalBarPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SÂRMĂ TAB ==================== -->
+        <section class="tab-panel" id="panel-sarma">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header"><h3>Schiță Sârmă</h3><span class="badge badge-purple">Vizualizare</span></div>
+                    <div class="diagram-container" id="diagramSarma">
+                        <svg viewBox="0 0 400 240" class="diagram-svg">
+                            <defs>
+                                <pattern id="gridSarma" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/></pattern>
+                                <linearGradient id="wireGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
+                            </defs>
+                            <rect width="400" height="240" fill="url(#gridSarma)"/>
+                            <path d="M100,120 C100,60 300,60 300,120 S100,180 100,120 Z" fill="none" stroke="url(#wireGrad)" stroke-width="4" stroke-dasharray="8 4" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <text x="200" y="125" text-anchor="middle" fill="#a78bfa" font-size="14" font-weight="700" font-family="JetBrains Mono">Colac Sârmă</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Sârmă</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formSarma" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="sarMarca">Marcaj (Marca)</label><input type="text" id="sarMarca" placeholder="Ex: S1, Legături..." oninput="calcSarma()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="sarTip">Tip Sârmă</label><select id="sarTip" onchange="calcSarma()"><option value="Neagră" selected>Sârmă Neagră</option><option value="Zincală">Sârmă Zincată</option></select></div>
+                            <div class="form-group"><label for="sarDiam">Diametru (mm)</label><select id="sarDiam" onchange="calcSarma()"><option value="1.2">Ø1.2</option><option value="1.6" selected>Ø1.6</option><option value="2.0">Ø2.0</option><option value="2.5">Ø2.5</option></select></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half-width"><label for="sarL">Lungime (m)</label><input type="number" id="sarL" value="100" min="1" step="1" oninput="calcSarma()"></div>
+                            <div class="form-group half-width"><label for="sarBuc">Nr. Colaci</label><input type="number" id="sarBuc" value="1" min="1" step="1" oninput="calcSarma()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsSarma">
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="sarGSp">0.009</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">Masa/Colac</span>
+                            <span class="result-value" id="sarMassBuc">0.90</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="sarGTot">0.90</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="sarPret">4.95</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Sârmă</h3><button class="btn-add" onclick="addRow('sarma')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableSarma">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Tip</th><th>Ø</th><th>Lung(m)</th><th>Colaci</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodySarma"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="7">TOTAL</td><td id="totalSarGreut">-</td><td id="totalSarPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TABLĂ TAB ==================== -->
+        <section class="tab-panel" id="panel-tabla">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header"><h3>Schiță Tablă</h3><span class="badge badge-teal">Vizualizare</span></div>
+                    <div class="diagram-container" id="diagramTabla">
+                        <svg viewBox="0 0 400 240" class="diagram-svg">
+                            <rect x="100" y="60" width="200" height="120" fill="none" stroke="#2dd4bf" stroke-width="2" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <path d="M100,60 L300,60 L300,180 L100,180 Z" fill="rgba(45, 212, 191, 0.1)" />
+                            <text x="200" y="125" text-anchor="middle" fill="#2dd4bf" font-size="14" font-weight="700" font-family="JetBrains Mono">Suprafață Metalică</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Tablă</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formTabla" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="tabMarca">Marcaj (Marca)</label><input type="text" id="tabMarca" placeholder="Ex: T1, Acoperiș..." oninput="calcTabla()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="tabTip">Tip Tablă</label><select id="tabTip" onchange="calcTabla()"><option value="Laminată la cald" selected>Laminată la cald</option><option value="Zincată">Zincată</option><option value="Striată">Striată</option></select></div>
+                            <div class="form-group"><label for="tabGros">Grosime (mm)</label><input type="number" id="tabGros" value="0.5" min="0.1" step="0.1" oninput="calcTabla()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="tabLungu">Lungime (cm)</label><input type="number" id="tabLungu" value="200" min="1" step="1" oninput="calcTabla()"></div>
+                            <div class="form-group"><label for="tabLat">Lățime (cm)</label><input type="number" id="tabLat" value="100" min="1" step="1" oninput="calcTabla()"></div>
+                            <div class="form-group"><label for="tabBuc">Bucăți</label><input type="number" id="tabBuc" value="1" min="1" step="1" oninput="calcTabla()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsTabla">
+                        <div class="result-card">
+                            <span class="result-label">G/mp</span>
+                            <span class="result-value" id="tabGUnit">3.93</span>
+                            <span class="result-unit">kg/mp</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">Supraf/buc</span>
+                            <span class="result-value" id="tabMpBuc">2.00</span>
+                            <span class="result-unit">mp</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="tabGTot">7.85</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="tabPret">43.18</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Tablă</h3><button class="btn-add" onclick="addRow('tabla')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableTabla">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Tip</th><th>Gros/Model</th><th>Dimensiuni</th><th>Buc</th><th>Mp tot</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodyTabla"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="7">TOTAL</td><td id="totalTabGreut">-</td><td id="totalTabPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== CORNIER TAB ==================== -->
+        <section class="tab-panel" id="panel-cornier">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header"><h3>Schiță Cornier</h3><span class="badge badge-orange">Vizualizare</span></div>
+                    <div class="diagram-container" id="diagramCornier">
+                        <svg viewBox="0 0 400 240" class="diagram-svg">
+                            <polyline points="150,60 150,180 270,180" fill="none" stroke="#f97316" stroke-width="8" stroke-linecap="butt" filter="url(#glowEtrier)" class="anim-draw"/>
+                            <text x="135" y="125" text-anchor="middle" fill="#f97316" font-size="14" font-weight="700" font-family="JetBrains Mono" transform="rotate(-90, 135, 125)">A</text>
+                            <text x="210" y="200" text-anchor="middle" fill="#f97316" font-size="14" font-weight="700" font-family="JetBrains Mono">B</text>
+                        </svg>
+                    </div>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Parametri Cornier</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formCornier" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="corMarca">Marcaj (Marca)</label><input type="text" id="corMarca" placeholder="Ex: C1, Suport..." oninput="calcCornier()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="corDimA">Latura A (mm)</label><input type="number" id="corDimA" value="40" min="1" step="1" oninput="calcCornier()"></div>
+                            <div class="form-group"><label for="corDimB">Latura B (mm)</label><input type="number" id="corDimB" value="40" min="1" step="1" oninput="calcCornier()"></div>
+                            <div class="form-group"><label for="corGros">Grosime (mm)</label><input type="number" id="corGros" value="4" min="0.1" step="0.1" oninput="calcCornier()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half-width"><label for="corL">Lungime (m)</label><input type="number" id="corL" value="6" min="0.1" step="0.1" oninput="calcCornier()"></div>
+                            <div class="form-group half-width"><label for="corBuc">Bucăți</label><input type="number" id="corBuc" value="1" min="1" step="1" oninput="calcCornier()"></div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsCornier">
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="corGSp">0.880</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">Masa/buc</span>
+                            <span class="result-value" id="corMassBuc">5.28</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="corGTot">5.28</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="corPret">29.04</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Cornier</h3><button class="btn-add" onclick="addRow('cornier')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tableCornier">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Dimensiuni</th><th>Lung(m)</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodyCornier"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="7">TOTAL</td><td id="totalCorGreut">-</td><td id="totalCorPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Summary Footer -->
+    <footer class="summary-footer" id="summaryFooter">
+        <div class="summary-inner">
+            <div class="summary-group">
+                <div class="summary-item">
+                    <span class="summary-label">Greutate totală</span>
+                    <span class="summary-value" id="grandTotalWeight">0.00 kg</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <span class="summary-label">Cost total</span>
+                    <span class="summary-value" id="grandTotalPrice">0.00 lei</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <span class="summary-label">Poziții</span>
+                    <span class="summary-value" id="grandTotalRows">0</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-actions">
+                    <button class="btn-share btn-whatsapp" onclick="shareResults('whatsapp')" title="Trimite pe WhatsApp">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.845-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412 0 6.556-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.223-3.673c1.576.933 3.11 1.391 4.746 1.391 5.438 0 9.863-4.426 9.863-9.864 0-2.635-1.026-5.112-2.89-6.975s-4.34-2.89-6.973-2.89c-5.438 0-9.863 4.426-9.863 9.864 0 1.742.483 3.44 1.398 4.914l-.991 3.615 3.71-.974zm10.276-6.611c-.246-.123-1.458-.721-1.685-.802-.224-.083-.389-.123-.553.123-.164.246-.632.802-.774.965-.144.164-.288.184-.533.062-.246-.123-1.036-.381-1.974-1.218-.729-.652-1.222-1.458-1.365-1.704-.144-.246-.016-.38.107-.502.112-.11.246-.288.369-.432.12-.144.162-.246.244-.411.082-.164.041-.308-.022-.432-.062-.123-.553-1.334-.757-1.826-.199-.481-.402-.416-.553-.424-.142-.007-.308-.009-.472-.009-.164 0-.432.062-.656.288-.224.224-.861.843-.861 2.053 0 1.21.881 2.378 1.003 2.541.123.164 1.733 2.647 4.197 3.71.586.253 1.043.404 1.4.517.589.186 1.127.16 1.551.097.472-.07.145-.288.752-.802.205-.514.205-.956.143-1.04-.061-.085-.224-.124-.47-.247z"/></svg>
+                        WhatsApp
+                    </button>
+                    <button class="btn-share btn-link" onclick="shareResults('link')" title="Copiază link-ul aplicației">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        Link
+                    </button>
+                </div>
+            </div>
+            <div class="app-version-wrapper">
+                <span class="app-version" id="appVersion">v9.2</span>
+                <span id="updateBadge" class="update-badge" onclick="window.location.reload()" style="display:none">Actualizează acum</span>
+                <button class="btn-emergency-reset" onclick="emergencyReset()" title="Resetare completă cache la v6.4">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-text" id="toastText">Rând adăugat cu succes</span>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Service Worker logic is now handled in app.js initPWA()
+    </script>
+</body>
+</html>

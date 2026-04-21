@@ -1,4 +1,4 @@
-const CACHE_NAME = 'armaturi-pro-v23';
+const CACHE_NAME = 'armaturi-pro-v28';
 const ASSETS = [
     './',
     './index.html',
@@ -26,11 +26,21 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Network First strategy - more reliable for ephemeral tunnels
+// NETWORK FIRST STRATEGY (Forced)
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
+        fetch(event.request)
+            .then((response) => {
+                // If it's a valid response, cache it and return it
+                if (response && response.status === 200) {
+                    const cacheCopy = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
+                }
+                return response;
+            })
+            .catch(() => {
+                // If network fails, use cache
+                return caches.match(event.request);
+            })
     );
 });

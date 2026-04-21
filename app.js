@@ -40,8 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * PWA & SERVICE WORKER LOGIC
  */
 function initPWA() {
-    const installBtn = document.getElementById('btnInstallPWA');
-    const updateBadge = document.getElementById('updateBadge');
+    const installBtn = document.getElementById('btnInstall');
     
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -49,18 +48,10 @@ function initPWA() {
         if (installBtn) installBtn.style.display = 'flex';
     });
 
-    if (installBtn) {
-        installBtn.addEventListener('click', () => {
-            if (!deferredPrompt) return;
-            installBtn.style.display = 'none';
-            deferredPrompt.prompt();
-        });
-    }
-
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=17`).then(reg => {
-            console.log('SW Registered [v17]');
+        navigator.serviceWorker.register(`./sw.js?v=22`).then(reg => {
+            console.log('SW Registered [v22]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -155,12 +146,31 @@ async function emergencyReset() {
 }
 
 function shareResults(method) {
-    const total = document.getElementById('grandTotal').textContent;
-    const text = `Calcul Armături Pro: Total estimat = ${total} RON. Verifică necesarul pe aplicația noastră!`;
+    const tg = document.getElementById('grandTotalWeight').textContent;
+    const tp = document.getElementById('grandTotalPrice').textContent;
+    const tr = document.getElementById('grandTotalRows').textContent;
+    const url = window.location.href;
+    const text = `PROIECT NOU ARMĂTURI\n\nRezumat:\n🔹 Greutate: ${tg}\n🔹 Cost estimat: ${tp}\n🔹 Total poziții: ${tr}\n\nAccesează proiectul aici:\n${url}`;
+
     if (method === 'whatsapp') {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     } else {
-        navigator.clipboard.writeText(text).then(() => showToast("Rezultatul a fost copiat în clipboard!"));
+        navigator.clipboard.writeText(url).then(() => {
+            showToast("Link copiat în clipboard!");
+        });
+    }
+}
+
+function installPWA() {
+    const installBtn = document.getElementById('btnInstall');
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                if (installBtn) installBtn.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
     }
 }
 
@@ -425,8 +435,8 @@ function addRow(type) {
                 clasa: getVal('etrClasa')||'BST500S', 
                 A: getNum('etrA')||25, 
                 B: getNum('etrB')||40, 
-                cioc: getNum('etrCioc')||10, 
-                buc: parseInt(getVal('etrBuc'))||50 
+                cioc: getNum('etrCioc')||7, 
+                buc: parseInt(getVal('etrBuc'))||1 
             }; break;
         case 'agrafe': 
             row = { id: nr, marca: finalMarca, 

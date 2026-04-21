@@ -4,7 +4,7 @@
   "description": "Calculator profesional pentru materiale metalice (armături, sârmă, tablă, cornier).",
   "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
   "display_override": [

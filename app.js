@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    CALCULATOR ARMATURI PRO - Logic v6.6
    Steel reinforcement & metal materials engine
    With Cache Busing & Emergency Reset
@@ -706,11 +706,11 @@ function printToPDF() {
     let content = `
         <div class="print-header">
             <div>
-                <h1 style="margin:0; font-size:24px;">CALCULATOR ARMÄ‚TURI PRO</h1>
+                <h1 style="margin:0; font-size:24px;">CALCULATOR ARM??TURI PRO</h1>
                 <p style="margin:0;">Extras de Materiale - ${new Date().toLocaleDateString('ro-RO')}</p>
             </div>
             <div style="text-align:right;">
-                <p style="margin:0;">PreČ› unitar bazÄƒ: ${getPretKg()} lei/kg</p>
+                <p style="margin:0;">Pre?? unitar baz??: ${getPretKg()} lei/kg</p>
             </div>
         </div>
     `;
@@ -753,11 +753,11 @@ function printToPDF() {
 
     content += `
         <div class="print-total-section">
-            <p>Total PoziČ›ii: ${tr}</p>
-            <p>Greutate TotalÄƒ: ${tg}</p>
+            <p>Total Pozi??ii: ${tr}</p>
+            <p>Greutate Total??: ${tg}</p>
             <p style="font-size:18px;">TOTAL GENERALE: ${tp}</p>
         </div>
-        <p style="margin-top:50px; font-size:10px; color:#666; text-align:center;">Generat automat cu Calculator ArmÄƒturi PRO</p>
+        <p style="margin-top:50px; font-size:10px; color:#666; text-align:center;">Generat automat cu Calculator Arm??turi PRO</p>
     `;
 
     printContainer.innerHTML = content;
@@ -775,13 +775,13 @@ function shareResults(method) {
     const tp = document.getElementById('grandTotalPrice').textContent;
     const tr = document.getElementById('grandTotalRows').textContent;
     const url = window.location.href;
-    const text = `PROIECT NOU ARMÄ‚TURI\n\nRezumat:\nđź”ą Greutate: ${tg}\nđź”ą Cost estimat: ${tp}\nđź”ą Total poziČ›ii: ${tr}\n\nAcceseazÄ proiectul aici:\n${url}`;
+    const text = `PROIECT NOU ARM??TURI\n\nRezumat:\n???? Greutate: ${tg}\n???? Cost estimat: ${tp}\n???? Total pozi??ii: ${tr}\n\nAcceseaz?? proiectul aici:\n${url}`;
 
     if (method === 'whatsapp') {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     } else {
         navigator.clipboard.writeText(url).then(() => {
-            showToast("Link copiat A®n clipboard!");
+            showToast("Link copiat A?n clipboard!");
         });
     }
 }

@@ -50,8 +50,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=22`).then(reg => {
-            console.log('SW Registered [v23]');
+        navigator.serviceWorker.register(`./sw.js?v=24`).then(reg => {
+            console.log('SW Registered [v24]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -617,10 +617,157 @@ function initParticles() {
 async function exportAllToExcel() {
     try {
         const wb = new ExcelJS.Workbook();
-        Object.keys(tableData).forEach(t => { if(tableData[t].length>0){ const ws=wb.addWorksheet(t.toUpperCase()); ws.addRow(Object.keys(tableData[t][0])); tableData[t].forEach(r=>ws.addRow(Object.values(r))); } });
-        const buf = await wb.xlsx.writeBuffer(); saveAs(new Blob([buf]), `Calculator_Armaturi_${new Date().toISOString().slice(0,10)}.xlsx`);
-        showToast("Excel exportat!");
-    } catch(e) { showToast("Eroare Export"); }
+        
+        Object.keys(tableData).forEach(t => { 
+            if(tableData[t].length > 0){ 
+                const ws = wb.addWorksheet(t.toUpperCase());
+                
+                // Set page setup for A4
+                ws.pageSetup.paperSize = 9; // A4
+                ws.pageSetup.orientation = 'landscape';
+                ws.pageSetup.fitToPage = true;
+                ws.pageSetup.fitToWidth = 1;
+                ws.pageSetup.fitToHeight = 0;
+                ws.pageSetup.margins = { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 };
+
+                // Define headers based on type
+                let headers = [];
+                if (t === 'etrieri') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'A (cm)', 'B (cm)', 'Cioc (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'agrafe') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'L (cm)', 'Cioc (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'arcade') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'D (cm)', 'H (cm)', 'H Mid (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'profileU') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'A (cm)', 'B (cm)', 'C (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'bare') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'L (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'sarma') headers = ['Nr', 'Marca', 'Tip', 'Diam', 'Lung (m)', 'Buc', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'tabla') headers = ['Nr', 'Marca', 'Mod', 'Spec/Model', 'Dim/Mp', 'Buc', 'Mp Tot (mp)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'cornier') headers = ['Nr', 'Marca', 'Dim', 'Lung (m)', 'Buc', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+
+                const headerRow = ws.addRow(headers);
+                headerRow.eachCell((cell) => {
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                });
+
+                tableData[t].forEach((r, idx) => {
+                    let rowVals = [];
+                    if (t === 'etrieri') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.A, r.B, r.cioc, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    else if (t === 'agrafe') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.L, r.cioc, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    else if (t === 'arcade') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.D, r.H, r.hMid, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    else if (t === 'profileU') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.A, r.B, r.C, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    else if (t === 'bare') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.L, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    else if (t === 'sarma') rowVals = [idx+1, r.marca, r.tip, r.diam, r.L, r.buc, (r.L*r.buc), r.gSp, r.gTot, r.pret];
+                    else if (t === 'tabla') rowVals = [idx+1, r.marca, r.mod, r.mod==='dreapta'?r.gros:r.model, r.mod==='dreapta'?`${r.lat}x${r.lung}`:r.mpTotal, r.buc, r.mpTot, r.gTot, r.pret];
+                    else if (t === 'cornier') rowVals = [idx+1, r.marca, r.dim, r.L, r.buc, (r.L*r.buc), r.gSp, r.gTot, r.pret];
+                    
+                    const addedRow = ws.addRow(rowVals);
+                    addedRow.eachCell((cell) => {
+                        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                        cell.alignment = { horizontal: 'center' };
+                    });
+                });
+
+                // Auto-fit columns (rough estimation)
+                ws.columns.forEach(col => { col.width = 12; });
+            } 
+        });
+
+        const buf = await wb.xlsx.writeBuffer();
+        const d = new Date().toISOString().slice(0,10);
+        saveAs(new Blob([buf]), `Calculator_Armaturi_${d}.xlsx`);
+        showToast("Excel optimizat A4 generat!");
+    } catch(e) { 
+        console.error(e);
+        showToast("Eroare Export Excel"); 
+    }
+}
+
+function printToPDF() {
+    // We add a special printable area to the body temporarily
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @media print {
+            body * { visibility: hidden; }
+            .print-container, .print-container * { visibility: visible; }
+            .print-container { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 20px; }
+            .print-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10px; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 4px; text-align: center; }
+            .print-table th { background: #f0f0f0; }
+            .print-total-section { display: flex; justify-content: flex-end; gap: 20px; margin-top: 20px; font-weight: bold; border-top: 2px solid #000; padding-top: 10px; }
+            .no-print { display: none !important; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const printContainer = document.createElement('div');
+    printContainer.className = 'print-container';
+    
+    let content = `
+        <div class="print-header">
+            <div>
+                <h1 style="margin:0; font-size:24px;">CALCULATOR ARMÄ‚TURI PRO</h1>
+                <p style="margin:0;">Extras de Materiale - ${new Date().toLocaleDateString('ro-RO')}</p>
+            </div>
+            <div style="text-align:right;">
+                <p style="margin:0;">PreČ› unitar bazÄƒ: ${getPretKg()} lei/kg</p>
+            </div>
+        </div>
+    `;
+
+    Object.keys(tableData).forEach(type => {
+        if (tableData[type].length > 0) {
+            content += `<h3 style="text-transform: uppercase;">Tablou: ${type}</h3>`;
+            content += `<table class="print-table">
+                <thead>
+                    <tr>
+                        <th>Nr</th><th>Marca</th><th>Diam</th><th>Detalii</th><th>Buc</th><th>Lung Tot</th><th>Greut Tot</th><th>Pret</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            tableData[type].forEach((r, idx) => {
+                let detalii = "";
+                if (type==='etrieri') detalii = `${r.A}x${r.B} c:${r.cioc}`;
+                else if (type==='agrafe') detalii = `L:${r.L} c:${r.cioc}`;
+                else if (type==='arcade') detalii = `D:${r.D} H:${r.H}`;
+                else if (type==='profileU') detalii = `${r.A}x${r.B}x${r.C}`;
+                else if (type==='bare') detalii = `L:${r.L}`;
+                else if (type==='sarma') detalii = `${r.tip}`;
+                else if (type==='tabla') detalii = `${r.mod}: ${r.mod==='dreapta'?r.gros:r.model}`;
+                else if (type==='cornier') detalii = `${r.dim}`;
+
+                content += `<tr>
+                    <td>${idx+1}</td><td>${r.marca}</td><td>${r.diam || r.dim || '-'}</td><td>${detalii}</td><td>${r.buc}</td>
+                    <td>${r.lungTot ? r.lungTot.toFixed(2)+' m' : (r.mpTot ? r.mpTot.toFixed(2)+' mp' : '-')}</td>
+                    <td>${r.gTot.toFixed(2)} kg</td><td>${r.pret.toFixed(2)} lei</td>
+                </tr>`;
+            });
+            content += `</tbody></table>`;
+        }
+    });
+
+    const tg = document.getElementById('grandTotalWeight').textContent;
+    const tp = document.getElementById('grandTotalPrice').textContent;
+    const tr = document.getElementById('grandTotalRows').textContent;
+
+    content += `
+        <div class="print-total-section">
+            <p>Total PoziČ›ii: ${tr}</p>
+            <p>Greutate TotalÄƒ: ${tg}</p>
+            <p style="font-size:18px;">TOTAL GENERALE: ${tp}</p>
+        </div>
+        <p style="margin-top:50px; font-size:10px; color:#666; text-align:center;">Generat automat cu Calculator ArmÄƒturi PRO</p>
+    `;
+
+    printContainer.innerHTML = content;
+    document.body.appendChild(printContainer);
+    
+    window.print();
+    
+    // Cleanup
+    document.body.removeChild(printContainer);
+    document.head.removeChild(style);
 }
 
 function shareResults(method) {

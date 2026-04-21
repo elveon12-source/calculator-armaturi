@@ -1,5 +1,5 @@
-/* ============================================
-   CALCULATOR ARM\u0102TURI PRO - Logic v6.6
+﻿/* ============================================
+   CALCULATOR ARMATURI PRO - Logic v6.6
    Steel reinforcement & metal materials engine
    With Cache Busing & Emergency Reset
    ============================================ */
@@ -105,7 +105,7 @@ function manualUpdateCheck() {
                     setTimeout(() => {
                         if (btn) btn.classList.remove('loading');
                         if (!reg.waiting && !reg.installing) {
-                            showToast("Aplica\u021Bia este deja la zi!");
+                            showToast("Aplicatia este deja la zi!");
                         }
                     }, 1000);
                 });
@@ -119,7 +119,7 @@ function manualUpdateCheck() {
 }
 
 async function emergencyReset() {
-    if (!confirm("Aceast\u0103 ac\u021Biune va \u0219terge tot cache-ul \u0219i va reseta aplica\u021Bia. Datele salvate vor r\u0103m\u00E2ne intacte. Continua\u021Bi?")) return;
+    if (!confirm("Aceasta actiune va sterge tot cache-ul si va reseta aplicatia. Datele salvate vor ramane intacte. Continuati?")) return;
     
     try {
         // 1. Unregister all service workers
@@ -150,13 +150,13 @@ function shareResults(method) {
     const tp = document.getElementById('grandTotalPrice').textContent;
     const tr = document.getElementById('grandTotalRows').textContent;
     const url = window.location.href;
-    const text = `PROIECT NOU ARM\u0102TURI\n\nRezumat:\n\uD83D\uDCC8 Greutate: ${tg}\n\uD83D\uDCC8 Cost estimat: ${tp}\n\uD83D\uDCC8 Total pozi\u021Bii: ${tr}\n\nAcceseaz\u0103 proiectul aici:\n${url}`;
+    const text = `PROIECT NOU ARMATURI\n\nRezumat:\n\uD83D\uDCC8 Greutate: ${tg}\n\uD83D\uDCC8 Cost estimat: ${tp}\n\uD83D\uDCC8 Total pozitii: ${tr}\n\nAcceseaza proiectul aici:\n${url}`;
 
     if (method === 'whatsapp') {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     } else {
         navigator.clipboard.writeText(url).then(() => {
-            showToast("Link copiat \u00EEn clipboard!");
+            showToast("Link copiat in clipboard!");
         });
     }
 }
@@ -183,7 +183,7 @@ function showUpdateToast(registration) {
     if (updateBadge) updateBadge.style.display = 'inline-flex';
     if (!toast || !toastText) return;
     
-    toastText.innerHTML = 'Versiune nou\u0103 disponibil\u0103! <button onclick="activateUpdate()" class="btn-update-toast" style="margin-left:10px; padding:2px 8px; background:#fff; color:#2563eb; border-radius:4px; font-weight:800; border:none; cursor:pointer">Actualizeaz\u0103</button>';
+    toastText.innerHTML = 'Versiune noua disponibila! <button onclick="activateUpdate()" class="btn-update-toast" style="margin-left:10px; padding:2px 8px; background:#fff; color:#2563eb; border-radius:4px; font-weight:800; border:none; cursor:pointer">Actualizeaza</button>';
     toast.classList.add('show', 'update-toast');
     
     window.activateUpdate = () => {
@@ -276,11 +276,11 @@ function showToast(message) {
 }
 
 // Dropdown Options
-function diameterOptions(selected) { return [6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 32].map(d => `<option value="${d}" ${d == selected ? 'selected' : ''}>\u00D8${d}</option>`).join(''); }
+function diameterOptions(selected) { return [6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 32].map(d => `<option value="${d}" ${d == selected ? 'selected' : ''}>Diam${d}</option>`).join(''); }
 function clasaOptions(selected) { return ['BST500S', 'PC52', 'OB37', 'S500'].map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join(''); }
-function sarmaTipOptions(selected) { return [{v:'moale_neagra', t:'Moale Neagr\u0103'}, {v:'galvanizata', t:'Galvanizat\u0103'}, {v:'ghimpata', t:'Ghimpat\u0103'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
+function sarmaTipOptions(selected) { return [{v:'moale_neagra', t:'Moale Neagra'}, {v:'galvanizata', t:'Galvanizata'}, {v:'ghimpata', t:'Ghimpata'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
 function sarmaDiamOptions(selected) { return Object.keys(weightsSarma).map(d => `<option value="${d}" ${d == selected ? 'selected' : ''}>${d} mm</option>`).join(''); }
-function tablaModOptions(selected) { return [{v:'dreapta', t:'Dreapt\u0103'}, {v:'cutata', t:'Cutat\u0103'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
+function tablaModOptions(selected) { return [{v:'dreapta', t:'Dreapta'}, {v:'cutata', t:'Cutata'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
 function tablaModelOptions(selected) { return Object.keys(weightsTablaCutata).map(m => `<option value="${m}" ${m === selected ? 'selected' : ''}>${m}</option>`).join(''); }
 function cornierDimOptions(selected) { return Object.keys(weightsCornier).map(d => `<option value="${d}" ${d === selected ? 'selected' : ''}>${d} mm</option>`).join(''); }
 
@@ -527,7 +527,7 @@ function renderTable(type) {
     const tbody = document.getElementById(`tbody${type.charAt(0).toUpperCase() + type.slice(1)}`);
     if (!tbody) return;
     if (tableData[type].length === 0) {
-        tbody.innerHTML = `<tr><td colspan="15" class="empty-state">Apas\u0103 pe "Adaug\u0103 r\u00E2nd" pentru a \u00EEncepe</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" class="empty-state">Apasa pe "Adauga rand" pentru a incepe</td></tr>`;
         return;
     }
     let html = '';
@@ -563,7 +563,7 @@ function renderTable(type) {
             html += `<td>${comp('lungTot', row.lungTot.toFixed(2))} m</td><td>${comp('gSp', row.gSp.toFixed(3))}</td>`;
         }
         html += `<td>${comp('gTot', row.gTot.toFixed(2))} kg</td><td>${comp('pret', row.pret.toFixed(2))} lei</td>`;
-        html += `<td class="actions-cell"><button class="btn-delete-row" onclick="deleteRow('${type}', ${row.id})">\u2716</button></td>`;
+        html += `<td class="actions-cell"><button class="btn-delete-row" onclick="deleteRow('${type}', ${row.id})">X</button></td>`;
         html += '</tr>';
     }); tbody.innerHTML = html;
 }
@@ -587,7 +587,7 @@ function updateTableTotals(type) {
         if (data.length === 0) summaryEl.innerHTML = '';
         else {
             const gr = {}; data.forEach(r => { const d = r.diam; gr[d] = (gr[d]||0) + r.gTot; });
-            const pts = Object.keys(gr).sort((a,b)=>parseFloat(a)-parseFloat(b)).map(d => `<span class="summary-chip"><b>\u00D8${d}</b>: ${gr[d].toFixed(2)} kg</span>`);
+            const pts = Object.keys(gr).sort((a,b)=>parseFloat(a)-parseFloat(b)).map(d => `<span class="summary-chip"><b>Diam${d}</b>: ${gr[d].toFixed(2)} kg</span>`);
             summaryEl.innerHTML = `<span class="summary-title">Rezumat Diametre:</span> ${pts.join(' ')}`;
         }
     }
@@ -781,7 +781,7 @@ function shareResults(method) {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     } else {
         navigator.clipboard.writeText(url).then(() => {
-            showToast("Link copiat Ă®n clipboard!");
+            showToast("Link copiat A®n clipboard!");
         });
     }
 }

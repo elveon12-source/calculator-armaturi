@@ -1,5 +1,5 @@
 /* ============================================
-   CALCULATOR ARMĂTURI PRO - Logic v6.4
+   CALCULATOR ARMÄ‚TURI PRO - Logic v6.4
    Steel reinforcement & metal materials engine
    With Cache Busing & Emergency Reset
    ============================================ */
@@ -51,7 +51,7 @@ function initPWA() {
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
         navigator.serviceWorker.register(`./sw.js?v=22`).then(reg => {
-            console.log('SW Registered [v22]');
+            console.log('SW Registered [v23]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -105,7 +105,7 @@ function manualUpdateCheck() {
                     setTimeout(() => {
                         if (btn) btn.classList.remove('loading');
                         if (!reg.waiting && !reg.installing) {
-                            showToast("Aplicația este deja la zi!");
+                            showToast("AplicaČ›ia este deja la zi!");
                         }
                     }, 1000);
                 });
@@ -119,7 +119,7 @@ function manualUpdateCheck() {
 }
 
 async function emergencyReset() {
-    if (!confirm("Această acțiune va șterge tot cache-ul și va reseta aplicația. Datele salvate vor rămâne intacte. Continuați?")) return;
+    if (!confirm("AceastÄ acČ›iune va Č™terge tot cache-ul Č™i va reseta aplicaČ›ia. Datele salvate vor rÄmĂ˘ne intacte. ContinuaČ›i?")) return;
     
     try {
         // 1. Unregister all service workers
@@ -150,13 +150,13 @@ function shareResults(method) {
     const tp = document.getElementById('grandTotalPrice').textContent;
     const tr = document.getElementById('grandTotalRows').textContent;
     const url = window.location.href;
-    const text = `PROIECT NOU ARMĂTURI\n\nRezumat:\n🔹 Greutate: ${tg}\n🔹 Cost estimat: ${tp}\n🔹 Total poziții: ${tr}\n\nAccesează proiectul aici:\n${url}`;
+    const text = `PROIECT NOU ARMÄ‚TURI\n\nRezumat:\nđź”ą Greutate: ${tg}\nđź”ą Cost estimat: ${tp}\nđź”ą Total poziČ›ii: ${tr}\n\nAcceseazÄ proiectul aici:\n${url}`;
 
     if (method === 'whatsapp') {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     } else {
         navigator.clipboard.writeText(url).then(() => {
-            showToast("Link copiat în clipboard!");
+            showToast("Link copiat Ă®n clipboard!");
         });
     }
 }
@@ -183,7 +183,7 @@ function showUpdateToast(registration) {
     if (updateBadge) updateBadge.style.display = 'inline-flex';
     if (!toast || !toastText) return;
     
-    toastText.innerHTML = 'Versiune nouă disponibilă! <button onclick="activateUpdate()" class="btn-update-toast" style="margin-left:10px; padding:2px 8px; background:#fff; color:#2563eb; border-radius:4px; font-weight:800; border:none; cursor:pointer">Actualizează</button>';
+    toastText.innerHTML = 'Versiune nouÄ disponibilÄ! <button onclick="activateUpdate()" class="btn-update-toast" style="margin-left:10px; padding:2px 8px; background:#fff; color:#2563eb; border-radius:4px; font-weight:800; border:none; cursor:pointer">ActualizeazÄ</button>';
     toast.classList.add('show', 'update-toast');
     
     window.activateUpdate = () => {
@@ -276,11 +276,11 @@ function showToast(message) {
 }
 
 // Dropdown Options
-function diameterOptions(selected) { return [6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 32].map(d => `<option value="${d}" ${d == selected ? 'selected' : ''}>Ø${d}</option>`).join(''); }
+function diameterOptions(selected) { return [6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 32].map(d => `<option value="${d}" ${d == selected ? 'selected' : ''}>Ă${d}</option>`).join(''); }
 function clasaOptions(selected) { return ['BST500S', 'PC52', 'OB37', 'S500'].map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join(''); }
-function sarmaTipOptions(selected) { return [{v:'moale_neagra', t:'Moale Neagră'}, {v:'galvanizata', t:'Galvanizată'}, {v:'ghimpata', t:'Ghimpată'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
+function sarmaTipOptions(selected) { return [{v:'moale_neagra', t:'Moale NeagrÄ'}, {v:'galvanizata', t:'GalvanizatÄ'}, {v:'ghimpata', t:'GhimpatÄ'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
 function sarmaDiamOptions(selected) { return Object.keys(weightsSarma).map(d => `<option value="${d}" ${d == selected ? 'selected' : ''}>${d} mm</option>`).join(''); }
-function tablaModOptions(selected) { return [{v:'dreapta', t:'Dreaptă'}, {v:'cutata', t:'Cutată'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
+function tablaModOptions(selected) { return [{v:'dreapta', t:'DreaptÄ'}, {v:'cutata', t:'CutatÄ'}].map(o => `<option value="${o.v}" ${o.v === selected ? 'selected' : ''}>${o.t}</option>`).join(''); }
 function tablaModelOptions(selected) { return Object.keys(weightsTablaCutata).map(m => `<option value="${m}" ${m === selected ? 'selected' : ''}>${m}</option>`).join(''); }
 function cornierDimOptions(selected) { return Object.keys(weightsCornier).map(d => `<option value="${d}" ${d === selected ? 'selected' : ''}>${d} mm</option>`).join(''); }
 
@@ -527,7 +527,7 @@ function renderTable(type) {
     const tbody = document.getElementById(`tbody${type.charAt(0).toUpperCase() + type.slice(1)}`);
     if (!tbody) return;
     if (tableData[type].length === 0) {
-        tbody.innerHTML = `<tr><td colspan="15" class="empty-state">Apasă pe "Adaugă rând" pentru a începe</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" class="empty-state">ApasÄ pe "AdaugÄ rĂ˘nd" pentru a Ă®ncepe</td></tr>`;
         return;
     }
     let html = '';
@@ -563,7 +563,7 @@ function renderTable(type) {
             html += `<td>${comp('lungTot', row.lungTot.toFixed(2))} m</td><td>${comp('gSp', row.gSp.toFixed(3))}</td>`;
         }
         html += `<td>${comp('gTot', row.gTot.toFixed(2))} kg</td><td>${comp('pret', row.pret.toFixed(2))} lei</td>`;
-        html += `<td class="actions-cell"><button class="btn-delete-row" onclick="deleteRow('${type}', ${row.id})">✕</button></td>`;
+        html += `<td class="actions-cell"><button class="btn-delete-row" onclick="deleteRow('${type}', ${row.id})">âś•</button></td>`;
         html += '</tr>';
     }); tbody.innerHTML = html;
 }
@@ -587,7 +587,7 @@ function updateTableTotals(type) {
         if (data.length === 0) summaryEl.innerHTML = '';
         else {
             const gr = {}; data.forEach(r => { const d = r.diam; gr[d] = (gr[d]||0) + r.gTot; });
-            const pts = Object.keys(gr).sort((a,b)=>parseFloat(a)-parseFloat(b)).map(d => `<span class="summary-chip"><b>Ø${d}</b>: ${gr[d].toFixed(2)} kg</span>`);
+            const pts = Object.keys(gr).sort((a,b)=>parseFloat(a)-parseFloat(b)).map(d => `<span class="summary-chip"><b>Ă${d}</b>: ${gr[d].toFixed(2)} kg</span>`);
             summaryEl.innerHTML = `<span class="summary-title">Rezumat Diametre:</span> ${pts.join(' ')}`;
         }
     }
@@ -628,13 +628,13 @@ function shareResults(method) {
     const tp = document.getElementById('grandTotalPrice').textContent;
     const tr = document.getElementById('grandTotalRows').textContent;
     const url = window.location.href;
-    const text = `PROIECT NOU ARMĂTURI\n\nRezumat:\n🔹 Greutate: ${tg}\n🔹 Cost estimat: ${tp}\n🔹 Total poziții: ${tr}\n\nAccesează proiectul aici:\n${url}`;
+    const text = `PROIECT NOU ARMÄ‚TURI\n\nRezumat:\nđź”ą Greutate: ${tg}\nđź”ą Cost estimat: ${tp}\nđź”ą Total poziČ›ii: ${tr}\n\nAcceseazÄ proiectul aici:\n${url}`;
 
     if (method === 'whatsapp') {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     } else {
         navigator.clipboard.writeText(url).then(() => {
-            showToast("Link copiat în clipboard!");
+            showToast("Link copiat Ă®n clipboard!");
         });
     }
 }

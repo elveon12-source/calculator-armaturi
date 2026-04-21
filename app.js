@@ -1,5 +1,5 @@
 /* ============================================
-   CALCULATOR ARMÄ‚TURI PRO - Logic v6.4
+   CALCULATOR ARMĂTURI PRO - Logic v6.5
    Steel reinforcement & metal materials engine
    With Cache Busing & Emergency Reset
    ============================================ */
@@ -50,8 +50,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=24`).then(reg => {
-            console.log('SW Registered [v24]');
+        navigator.serviceWorker.register(`./sw.js?v=25`).then(reg => {
+            console.log('SW Registered [v25]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -105,7 +105,7 @@ function manualUpdateCheck() {
                     setTimeout(() => {
                         if (btn) btn.classList.remove('loading');
                         if (!reg.waiting && !reg.installing) {
-                            showToast("AplicaČ›ia este deja la zi!");
+                            showToast("Aplicația este deja la zi!");
                         }
                     }, 1000);
                 });
@@ -563,7 +563,7 @@ function renderTable(type) {
             html += `<td>${comp('lungTot', row.lungTot.toFixed(2))} m</td><td>${comp('gSp', row.gSp.toFixed(3))}</td>`;
         }
         html += `<td>${comp('gTot', row.gTot.toFixed(2))} kg</td><td>${comp('pret', row.pret.toFixed(2))} lei</td>`;
-        html += `<td class="actions-cell"><button class="btn-delete-row" onclick="deleteRow('${type}', ${row.id})">âś•</button></td>`;
+        html += `<td class="actions-cell"><button class="btn-delete-row" onclick="deleteRow('${type}', ${row.id})">✖</button></td>`;
         html += '</tr>';
     }); tbody.innerHTML = html;
 }

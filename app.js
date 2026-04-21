@@ -683,19 +683,18 @@ async function exportAllToExcel() {
 }
 
 function printToPDF() {
-    // We add a special printable area to the body temporarily
     const style = document.createElement('style');
     style.innerHTML = `
         @media print {
             body * { visibility: hidden; }
             .print-container, .print-container * { visibility: visible; }
-            .print-container { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 20px; }
-            .print-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10px; }
-            .print-table th, .print-table td { border: 1px solid #000; padding: 4px; text-align: center; }
-            .print-table th { background: #f0f0f0; }
-            .print-total-section { display: flex; justify-content: flex-end; gap: 20px; margin-top: 20px; font-weight: bold; border-top: 2px solid #000; padding-top: 10px; }
-            .no-print { display: none !important; }
+            .print-container { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 20px; font-family: sans-serif; }
+            .print-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 6px; text-align: center; }
+            .print-table th { background: #eee; font-weight: bold; }
+            .diam-summary-row { background: #f9f9f9; font-weight: bold; text-align: left !important; padding-left: 10px !important; }
+            .final-totals { margin-top: 30px; border-top: 2px solid #000; padding-top: 10px; font-weight: bold; }
         }
     `;
     document.head.appendChild(style);
@@ -705,67 +704,83 @@ function printToPDF() {
     
     let content = `
         <div class="print-header">
-            <div>
-                <h1 style="margin:0; font-size:24px;">CALCULATOR ARM??TURI PRO</h1>
-                <p style="margin:0;">Extras de Materiale - ${new Date().toLocaleDateString('ro-RO')}</p>
-            </div>
-            <div style="text-align:right;">
-                <p style="margin:0;">Pre?? unitar baz??: ${getPretKg()} lei/kg</p>
-            </div>
+            <h1 style="margin:0; font-size:20px;">EXTRAS DE ARMATURA - PROIECT</h1>
+            <p style="margin:5px 0 0 0;">Data generarii: ${new Date().toLocaleDateString('ro-RO')}</p>
         </div>
     `;
 
+    const globalDiamSums = {};
+
     Object.keys(tableData).forEach(type => {
         if (tableData[type].length > 0) {
-            content += `<h3 style="text-transform: uppercase;">Tablou: ${type}</h3>`;
+            content += `<h3 style="text-transform: uppercase; margin-bottom:10px; font-size:14px; border-bottom:1px solid #ccc;">TABLOU: ${type}</h3>`;
             content += `<table class="print-table">
                 <thead>
                     <tr>
-                        <th>Nr</th><th>Marca</th><th>Diam</th><th>Detalii</th><th>Buc</th><th>Lung Tot</th><th>Greut Tot</th><th>Pret</th>
+                        <th style="width:40px;">Nr</th>
+                        <th style="width:80px;">Marca</th>
+                        <th style="width:60px;">Diam</th>
+                        <th>Dimensiuni / Detalii</th>
+                        <th style="width:60px;">Buc</th>
+                        <th style="width:80px;">Greutate (kg)</th>
                     </tr>
                 </thead>
                 <tbody>`;
             
+            let typeWeight = 0;
             tableData[type].forEach((r, idx) => {
                 let detalii = "";
-                if (type==='etrieri') detalii = `${r.A}x${r.B} c:${r.cioc}`;
-                else if (type==='agrafe') detalii = `L:${r.L} c:${r.cioc}`;
-                else if (type==='arcade') detalii = `D:${r.D} H:${r.H}`;
-                else if (type==='profileU') detalii = `${r.A}x${r.B}x${r.C}`;
-                else if (type==='bare') detalii = `L:${r.L}`;
-                else if (type==='sarma') detalii = `${r.tip}`;
-                else if (type==='tabla') detalii = `${r.mod}: ${r.mod==='dreapta'?r.gros:r.model}`;
-                else if (type==='cornier') detalii = `${r.dim}`;
+                let diamKey = r.diam || r.dim || "Altul";
+                
+                if (type==='etrieri') detalii = `${r.A} x ${r.B} (cioc ${r.cioc} cm)`;
+                else if (type==='agrafe') detalii = `L=${r.L} cm (cioc ${r.cioc} cm)`;
+                else if (type==='arcade') detalii = `D=${r.D} cm, H=${r.H} cm`;
+                else if (type==='profileU') detalii = `${r.A} x ${r.B} x ${r.C} cm`;
+                else if (type==='bare') detalii = `Bara dreapta L=${r.L} cm`;
+                else if (type==='sarma') detalii = `Sarma ${r.tip}`;
+                else if (type==='tabla') detalii = `Tabla ${r.mod} (${r.mod==='dreapta' ? r.gros+'mm' : r.model})`;
+                else if (type==='cornier') detalii = `Cornier ${r.dim}, L=${r.L}m`;
 
                 content += `<tr>
-                    <td>${idx+1}</td><td>${r.marca}</td><td>${r.diam || r.dim || '-'}</td><td>${detalii}</td><td>${r.buc}</td>
-                    <td>${r.lungTot ? r.lungTot.toFixed(2)+' m' : (r.mpTot ? r.mpTot.toFixed(2)+' mp' : '-')}</td>
-                    <td>${r.gTot.toFixed(2)} kg</td><td>${r.pret.toFixed(2)} lei</td>
+                    <td>${idx+1}</td>
+                    <td>${r.marca}</td>
+                    <td>${diamKey}</td>
+                    <td style="text-align:left; padding-left:10px;">${detalii}</td>
+                    <td>${r.buc}</td>
+                    <td>${r.gTot.toFixed(2)}</td>
                 </tr>`;
+
+                typeWeight += r.gTot;
+                globalDiamSums[diamKey] = (globalDiamSums[diamKey] || 0) + r.gTot;
             });
+            
             content += `</tbody></table>`;
         }
     });
 
-    const tg = document.getElementById('grandTotalWeight').textContent;
-    const tp = document.getElementById('grandTotalPrice').textContent;
-    const tr = document.getElementById('grandTotalRows').textContent;
+    content += `<div class="final-totals">
+        <h3 style="margin-bottom:10px;">REZUMAT TOTAL PE DIAMETRE:</h3>
+        <table class="print-table" style="width: 300px;">
+            <thead><tr><th>Diametru</th><th>Greutate Totala (kg)</th></tr></thead>
+            <tbody>`;
+    
+    let totalGeneral = 0;
+    Object.keys(globalDiamSums).sort((a,b) => parseFloat(a)-parseFloat(b)).forEach(d => {
+        content += `<tr><td><b>${d}</b></td><td>${globalDiamSums[d].toFixed(2)}</td></tr>`;
+        totalGeneral += globalDiamSums[d];
+    });
 
     content += `
-        <div class="print-total-section">
-            <p>Total Pozi??ii: ${tr}</p>
-            <p>Greutate Total??: ${tg}</p>
-            <p style="font-size:18px;">TOTAL GENERALE: ${tp}</p>
-        </div>
-        <p style="margin-top:50px; font-size:10px; color:#666; text-align:center;">Generat automat cu Calculator Arm??turi PRO</p>
-    `;
+            <tr style="background:#eee;"><td><b>TOTAL GENERAL</b></td><td><b>${totalGeneral.toFixed(2)} kg</b></td></tr>
+            </tbody>
+        </table>
+    </div>`;
+
+    content += `<p style="margin-top:40px; font-size:9px; color:#aaa; text-align:center;">Document generat automat de Calculator Armaturi PRO v9.2</p>`;
 
     printContainer.innerHTML = content;
     document.body.appendChild(printContainer);
-    
     window.print();
-    
-    // Cleanup
     document.body.removeChild(printContainer);
     document.head.removeChild(style);
 }

@@ -435,7 +435,7 @@ function addRow(type) {
                 clasa: getVal('etrClasa')||'BST500S', 
                 A: getNum('etrA')||25, 
                 B: getNum('etrB')||40, 
-                cioc: getNum('etrCioc')||7, 
+                cioc: getNum('etrCioc')||7.5, 
                 buc: parseInt(getVal('etrBuc'))||1 
             }; break;
         case 'agrafe': 

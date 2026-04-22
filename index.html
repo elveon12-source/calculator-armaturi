@@ -116,13 +116,13 @@
                 </span>
                 <span class="tab-label">Tablă</span>
             </button>
-            <button class="tab-btn" data-tab="cornier" id="tabCornier">
+            <button class="tab-btn" data-tab="proiecte" id="tabProiecte">
                 <span class="tab-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 6v12h12"/>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z"/>
                     </svg>
                 </span>
-                <span class="tab-label">Cornier</span>
+                <span class="tab-label">Proiecte</span>
             </button>
             <div class="tab-indicator" id="tabIndicator"></div>
         </div>
@@ -797,6 +797,117 @@
             </div>
         </section>
 
+        <!-- ==================== PROIECTE TAB ==================== -->
+        <section class="tab-panel" id="panel-proiecte">
+            <div class="panel-grid">
+                <!-- Date Client / Proiect -->
+                <div class="calc-card">
+                    <div class="card-header">
+                        <h3>Detalii Proiect & Client</h3>
+                        <span class="badge badge-blue">Ofertă</span>
+                    </div>
+                    <div class="calc-form">
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="projName">Nume Proiect / Referință</label>
+                                <input type="text" id="projName" placeholder="Ex: Vila Popescu - Fundație">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="projCUI">CUI Client (Căutare Auto)</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="projCUI" placeholder="Ex: 12345678">
+                                    <button class="btn-add" style="padding: 0 15px;" onclick="lookupCUI()">🔍</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="projClient">Nume Beneficiar</label>
+                                <input type="text" id="projClient" placeholder="Se completează automat la CUI">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="projAdresa">Adresă Client</label>
+                                <input type="text" id="projAdresa" placeholder="Adresa completă de livrare/facturare">
+                            </div>
+                        </div>
+                        <div class="form-row" style="margin-top: 15px;">
+                            <button class="btn-add" style="width: 100%; border-radius: 8px;" onclick="saveCurrentProject()">
+                                💾 SALVEAZĂ PROIECTUL ÎN ISTORIC
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setări Furnizor (Datele Tale) -->
+                <div class="calc-card">
+                    <div class="card-header">
+                        <h3>Datele Tale (Furnizor)</h3>
+                        <span class="badge badge-green">Setări</span>
+                    </div>
+                    <div class="calc-form">
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="ownName">Numele Firmei Tale</label>
+                                <input type="text" id="ownName" oninput="saveOwnSettings()" placeholder="Firma ta SRL">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ownCUI">CUI Firma Ta</label>
+                                <input type="text" id="ownCUI" oninput="saveOwnSettings()" placeholder="RO 123456">
+                            </div>
+                            <div class="form-group">
+                                <label for="ownJ">Nr. Reg. Com.</label>
+                                <input type="text" id="ownJ" oninput="saveOwnSettings()" placeholder="J40/123/2020">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="ownIBAN">Cont IBAN</label>
+                                <input type="text" id="ownIBAN" oninput="saveOwnSettings()" placeholder="RO12BTRLR...">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="ownBanca">Banca</label>
+                                <input type="text" id="ownBanca" oninput="saveOwnSettings()" placeholder="Banca Transilvania">
+                            </div>
+                        </div>
+                        <p style="font-size: 10px; color: var(--text-muted); margin-top: 10px;">
+                            * Aceste date sunt salvate local pe acest dispozitiv și vor apărea automat în orice PDF exportat.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listă Istoric Proiecte -->
+            <div class="table-card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3>📦 Istoric Proiecte Salvate</h3>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Nume Proiect</th>
+                                <th>Client</th>
+                                <th>Greutate Totală</th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Populated via JS -->
+                            <tr><td colspan="5" style="padding: 20px; color: var(--text-muted);">Nu există proiecte salvate încă.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Summary Footer -->

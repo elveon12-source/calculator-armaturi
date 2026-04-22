@@ -687,103 +687,121 @@ function printToPDF() {
     style.innerHTML = `
         @media print {
             body * { visibility: hidden; }
-            .print-container, .print-container * { visibility: visible; }
-            .print-container { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 20px; font-family: sans-serif; }
-            .print-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
-            .print-table th, .print-table td { border: 1px solid #000; padding: 6px; text-align: center; }
-            .print-table th { background: #eee; font-weight: bold; }
-            .diam-summary-row { background: #f9f9f9; font-weight: bold; text-align: left !important; padding-left: 10px !important; }
-            .final-totals { margin-top: 30px; border-top: 2px solid #000; padding-top: 10px; font-weight: bold; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #1e293b; background: #fff; padding: 12mm; font-family: 'Segoe UI', Arial, sans-serif; }
+            
+            .print-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1e40af; padding-bottom: 10px; margin-bottom: 20px; }
+            .logo-container { width: 60px; height: 60px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+            .logo-container img { width: 100%; height: auto; }
+            .header-info { text-align: right; }
+            .header-info h1 { margin: 0; color: #1e40af; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .header-info p { margin: 2px 0 0 0; color: #64748b; font-size: 11px; }
+
+            .section-title { background: #1e3a8a !important; color: #ffffff !important; padding: 5px 12px; font-weight: bold; font-size: 11px; text-transform: uppercase; margin-top: 15px; margin-bottom: 0; border-radius: 4px 4px 0 0; -webkit-print-color-adjust: exact; }
+            
+            table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+            th { background: #f8fafc !important; color: #475569 !important; font-weight: bold; text-transform: uppercase; font-size: 10px; padding: 6px 4px; border: 1px solid #e2e8f0; -webkit-print-color-adjust: exact; }
+            td { padding: 4px 4px; text-align: center; font-size: 10.5px; border: 1px solid #e2e8f0; color: #1e293b; }
+            
+            tr:nth-child(even) { background: #fdfdfd !important; -webkit-print-color-adjust: exact; }
+            
+            .group-total-row { background: #eff6ff !important; font-weight: bold; color: #1e40af !important; -webkit-print-color-adjust: exact; font-size: 10.5px; }
+            .group-total-row td { border-top: 1.5px solid #1e40af; padding: 6px 4px; }
+
+            .grand-summary { margin-top: 30px; background: #f8fafc; border: 2px solid #1e40af; border-radius: 6px; padding: 15px; page-break-inside: avoid; }
+            .grand-summary h2 { margin: 0 0 10px 0; font-size: 16px; color: #1e40af; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
+            .summary-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #cbd5e1; font-size: 11px; }
+            .summary-item:last-child { border-bottom: none; font-size: 15px; font-weight: bold; color: #1e40af; padding-top: 8px; }
+            
+            .footer { margin-top: 40px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         }
     `;
     document.head.appendChild(style);
 
-    const printContainer = document.createElement('div');
-    printContainer.className = 'print-container';
+    const printArea = document.createElement('div');
+    printArea.id = 'print-area';
     
     let content = `
         <div class="print-header">
-            <h1 style="margin:0; font-size:20px;">EXTRAS DE ARMATURA - PROIECT</h1>
-            <p style="margin:5px 0 0 0;">Data generarii: ${new Date().toLocaleDateString('ro-RO')}</p>
+            <div class="logo-container">
+                <img src="construction_steel_logo.png" onerror="this.src='https://via.placeholder.com/60/1e40af/ffffff?text=ELV'">
+            </div>
+            <div class="header-info">
+                <h1>Extras Armatura Pro</h1>
+                <p>Raport Tehnic de Santier | Data: ${new Date().toLocaleDateString('ro-RO')}</p>
+                <p>ID Doc: REF-${Math.floor(Math.random()*10000)}</p>
+            </div>
         </div>
     `;
 
     const globalDiamSums = {};
+    let totalWeight = 0;
 
     Object.keys(tableData).forEach(type => {
         if (tableData[type].length > 0) {
-            content += `<h3 style="text-transform: uppercase; margin-bottom:10px; font-size:14px; border-bottom:1px solid #ccc;">TABLOU: ${type}</h3>`;
-            content += `<table class="print-table">
-                <thead>
-                    <tr>
-                        <th style="width:40px;">Nr</th>
-                        <th style="width:80px;">Marca</th>
-                        <th style="width:60px;">Diam</th>
-                        <th>Dimensiuni / Detalii</th>
-                        <th style="width:60px;">Buc</th>
-                        <th style="width:80px;">Greutate (kg)</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-            
-            let typeWeight = 0;
-            tableData[type].forEach((r, idx) => {
-                let detalii = "";
-                let diamKey = r.diam || r.dim || "Altul";
-                
-                if (type==='etrieri') detalii = `${r.A} x ${r.B} (cioc ${r.cioc} cm)`;
-                else if (type==='agrafe') detalii = `L=${r.L} cm (cioc ${r.cioc} cm)`;
-                else if (type==='arcade') detalii = `D=${r.D} cm, H=${r.H} cm`;
-                else if (type==='profileU') detalii = `${r.A} x ${r.B} x ${r.C} cm`;
-                else if (type==='bare') detalii = `Bara dreapta L=${r.L} cm`;
-                else if (type==='sarma') detalii = `Sarma ${r.tip}`;
-                else if (type==='tabla') detalii = `Tabla ${r.mod} (${r.mod==='dreapta' ? r.gros+'mm' : r.model})`;
-                else if (type==='cornier') detalii = `Cornier ${r.dim}, L=${r.L}m`;
-
-                content += `<tr>
-                    <td>${idx+1}</td>
-                    <td>${r.marca}</td>
-                    <td>${diamKey}</td>
-                    <td style="text-align:left; padding-left:10px;">${detalii}</td>
-                    <td>${r.buc}</td>
-                    <td>${r.gTot.toFixed(2)}</td>
-                </tr>`;
-
-                typeWeight += r.gTot;
-                globalDiamSums[diamKey] = (globalDiamSums[diamKey] || 0) + r.gTot;
+            const grouped = {};
+            tableData[type].forEach(r => {
+                const d = r.diam || r.dim || "Diverse";
+                if (!grouped[d]) grouped[d] = [];
+                grouped[d].push(r);
             });
-            
-            content += `</tbody></table>`;
+
+            const sortedDiams = Object.keys(grouped).sort((a,b) => parseFloat(a) - parseFloat(b));
+
+            sortedDiams.forEach(diam => {
+                content += `<div class="section-title">${type.toUpperCase()} | DIAMETRU ${diam} MM</div>`;
+                content += `<table>
+                    <thead>
+                        <tr><th>Nr</th><th>Marca</th><th style="width:80px;">Diam</th><th>Dimensiuni Detaliate</th><th style="width:60px;">Buc</th><th>Greutate (kg)</th></tr>
+                    </thead>
+                    <tbody>`;
+                
+                let subtotal = 0;
+                grouped[diam].forEach((r, idx) => {
+                    let detalii = "";
+                    if (type === 'etrieri') detalii = `${r.A}x${r.B} cm (c:${r.cioc} cm)`;
+                    else if (type === 'agrafe') detalii = `L:${r.L} cm | Ciocauri:${r.cioc} cm`;
+                    else if (type === 'arcade') detalii = `D:${r.D} cm | H:${r.H} cm`;
+                    else if (type === 'profileU') detalii = `${r.A}+${r.B}+${r.C} cm`;
+                    else if (type === 'bare') detalii = `Bara dreapta L=${r.L} cm`;
+                    else detalii = r.tip || r.model || r.dim || "-";
+
+                    content += `<tr>
+                        <td>${idx + 1}</td>
+                        <td style="font-weight:bold;">${r.marca}</td>
+                        <td>${diam} mm</td>
+                        <td style="text-align:left; padding-left:10px;">${detalii}</td>
+                        <td>${r.buc}</td>
+                        <td style="font-weight:600;">${r.gTot.toFixed(2)}</td>
+                    </tr>`;
+                    subtotal += r.gTot;
+                });
+                
+                content += `<tr class="group-total-row">
+                    <td colspan="5" style="text-align:right; text-transform:uppercase;">Subtotal Grosime ${diam} mm:</td>
+                    <td>${subtotal.toFixed(2)} kg</td>
+                </tr>`;
+                content += `</tbody></table>`;
+                globalDiamSums[diam] = (globalDiamSums[diam] || 0) + subtotal;
+                totalWeight += subtotal;
+            });
         }
     });
 
-    content += `<div class="final-totals">
-        <h3 style="margin-bottom:10px;">REZUMAT TOTAL PE DIAMETRE:</h3>
-        <table class="print-table" style="width: 300px;">
-            <thead><tr><th>Diametru</th><th>Greutate Totala (kg)</th></tr></thead>
-            <tbody>`;
-    
-    let totalGeneral = 0;
-    Object.keys(globalDiamSums).sort((a,b) => parseFloat(a)-parseFloat(b)).forEach(d => {
-        content += `<tr><td><b>${d}</b></td><td>${globalDiamSums[d].toFixed(2)}</td></tr>`;
-        totalGeneral += globalDiamSums[d];
+    content += `<div class="grand-summary"><h2>REZUMAT TOTAL DIAMETRE</h2>`;
+    Object.keys(globalDiamSums).sort((a,b)=>parseFloat(a)-parseFloat(b)).forEach(d => {
+        content += `<div class="summary-item"><span>Fier Diametru Ø${d}</span><span>${globalDiamSums[d].toFixed(2)} kg</span></div>`;
     });
+    content += `<div class="summary-item"><span>TOTAL GENERAL PROIECT</span><span>${totalWeight.toFixed(2)} kg</span></div></div>`;
+    content += `<div class="footer"><p>Raport Tehnic Profesional - Automatizat</p></div>`;
 
-    content += `
-            <tr style="background:#eee;"><td><b>TOTAL GENERAL</b></td><td><b>${totalGeneral.toFixed(2)} kg</b></td></tr>
-            </tbody>
-        </table>
-    </div>`;
-
-    content += `<p style="margin-top:40px; font-size:9px; color:#aaa; text-align:center;">Document generat automat de Calculator Armaturi PRO v9.2</p>`;
-
-    printContainer.innerHTML = content;
-    document.body.appendChild(printContainer);
+    printArea.innerHTML = content;
+    document.body.appendChild(printArea);
     window.print();
-    document.body.removeChild(printContainer);
+    document.body.removeChild(printArea);
     document.head.removeChild(style);
 }
+
 
 function shareResults(method) {
     const tg = document.getElementById('grandTotalWeight').textContent;

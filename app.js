@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initParticles();
     initPWA();
     loadFromLocalStorage();
+    loadOwnSettings();
+    renderHistory();
     recalcAll();
     ['etrieri', 'agrafe', 'arcade', 'profileU', 'bare', 'sarma', 'tabla', 'cornier'].forEach(type => renderTable(type));
     
@@ -232,6 +234,8 @@ function initTabs() {
             const panel = document.getElementById(`panel-${tabId}`);
             if (panel) panel.classList.add('active');
             
+            if (tabId === 'proiecte') renderHistory();
+
             if (indicator) {
                 indicator.style.width = `${btn.offsetWidth}px`;
                 indicator.style.left = `${btn.offsetLeft}px`;
@@ -435,7 +439,7 @@ function addRow(type) {
                 clasa: getVal('etrClasa')||'BST500S', 
                 A: getNum('etrA')||25, 
                 B: getNum('etrB')||40, 
-                cioc: getNum('etrCioc')||7.5, 
+                cioc: getNum('etrCioc')||7, 
                 buc: parseInt(getVal('etrBuc'))||1 
             }; break;
         case 'agrafe': 
@@ -727,9 +731,16 @@ function printToPDF() {
                 <img src="construction_steel_logo.png" onerror="this.src='https://via.placeholder.com/60/1e40af/ffffff?text=ELV'">
             </div>
             <div class="header-info">
-                <h1>Extras Armatura Pro</h1>
-                <p>Raport Tehnic de Santier | Data: ${new Date().toLocaleDateString('ro-RO')}</p>
-                <p>ID Doc: REF-${Math.floor(Math.random()*10000)}</p>
+                <h1>${document.getElementById('ownName').value || 'Extras Armatura Pro'}</h1>
+                <p>${document.getElementById('ownCUI').value || ''} | ${document.getElementById('ownJ').value || ''}</p>
+                <p>IBAN: ${document.getElementById('ownIBAN').value || ''} | Banca: ${document.getElementById('ownBanca').value || ''}</p>
+            </div>
+            <div style="text-align: right; border-left: 2px solid #1e40af; padding-left: 15px;">
+                <h2 style="margin:0; font-size: 14px; color: #1e40af;">BENEFICIAR</h2>
+                <p style="margin:2px 0; font-weight:bold; font-size:12px;">${document.getElementById('projClient').value || 'Client General'}</p>
+                <p style="margin:2px 0; font-size:10px;">${document.getElementById('projAdresa').value || '-'}</p>
+                <p style="margin:5px 0 0 0; font-size:10px; color: #64748b;">Proiect: ${document.getElementById('projName').value || 'Nesalvat'}</p>
+                <p style="margin:0; font-size:9px;">Data: ${new Date().toLocaleDateString('ro-RO')}</p>
             </div>
         </div>
     `;
@@ -800,6 +811,165 @@ function printToPDF() {
     window.print();
     document.body.removeChild(printArea);
     document.head.removeChild(style);
+}
+
+// ========================
+// PROJECT MANAGEMENT & CUI LOOKUP
+// ========================
+
+function saveOwnSettings() {
+    const settings = {
+        name: document.getElementById('ownName').value,
+        cui: document.getElementById('ownCUI').value,
+        j: document.getElementById('ownJ').value,
+        iban: document.getElementById('ownIBAN').value,
+        banca: document.getElementById('ownBanca').value
+    };
+    localStorage.setItem('arm_own_settings', JSON.stringify(settings));
+}
+
+function loadOwnSettings() {
+    const saved = localStorage.getItem('arm_own_settings');
+    if (saved) {
+        const s = JSON.parse(saved);
+        document.getElementById('ownName').value = s.name || '';
+        document.getElementById('ownCUI').value = s.cui || '';
+        document.getElementById('ownJ').value = s.j || '';
+        document.getElementById('ownIBAN').value = s.iban || '';
+        document.getElementById('ownBanca').value = s.banca || '';
+    }
+}
+
+async function lookupCUI() {
+    const cuiInput = document.getElementById('projCUI').value.trim();
+    if (!cuiInput) { showToast('Introdu un CUI valid!'); return; }
+    
+    const cleanCUI = parseInt(cuiInput.toUpperCase().replace('RO', '').trim());
+    if (isNaN(cleanCUI)) { showToast('CUI invalid!'); return; }
+    
+    showToast('Cautare firma (ANAF)...');
+
+    const today = new Date().toISOString().split('T')[0];
+    const payload = JSON.stringify([{ cui: cleanCUI, data: today }]);
+    
+    // Primary: direct ANAF API
+    const targetUrl = 'https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva';
+    
+    try {
+        let response = await fetch(targetUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+        });
+        
+        const data = await response.json();
+        
+        if (data.found && data.found.length > 0) {
+            const firm = data.found[0].date_generale;
+            document.getElementById('projClient').value = firm.denumire || '';
+            document.getElementById('projAdresa').value = firm.adresa || '';
+            showToast('Firma gasita (ANAF)!');
+            return;
+        } else {
+            showToast('CUI inexistent.');
+            return;
+        }
+    } catch (err) {
+        console.warn("Direct ANAF CORS/Network failed, trying proxy...");
+    }
+
+    try {
+        // Fallback: ANAF through Proxy
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+        let proxyResponse = await fetch(proxyUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+        });
+
+        const data2 = await proxyResponse.json();
+        
+        if (data2.found && data2.found.length > 0) {
+            const firm = data2.found[0].date_generale;
+            document.getElementById('projClient').value = firm.denumire || '';
+            document.getElementById('projAdresa').value = firm.adresa || '';
+            showToast('Firma gasita (Proxy)!');
+        } else {
+            showToast('CUI inexistent.');
+        }
+    } catch (err2) {
+        console.error("Lookup failed completely", err2);
+        showToast('Eroare retea ANAF. Introdu manual.');
+    }
+}
+
+function saveCurrentProject() {
+    const name = document.getElementById('projName').value.trim();
+    if (!name) { showToast('Nume proiect obligatoriu!'); return; }
+    const projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const newProj = {
+        id: Date.now(),
+        date: new Date().toLocaleString('ro-RO'),
+        name: name,
+        client: document.getElementById('projClient').value,
+        cui: document.getElementById('projCUI').value,
+        adresa: document.getElementById('projAdresa').value,
+        data: JSON.parse(JSON.stringify(tableData)),
+        totalWeight: parseFloat(document.getElementById('grandTotalWeight').textContent) || 0
+    };
+    projects.push(newProj);
+    localStorage.setItem('arm_projects', JSON.stringify(projects));
+    showToast('Proiect salvat!');
+    renderHistory();
+}
+
+function renderHistory() {
+    const projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const body = document.getElementById('historyTableBody');
+    if (!body) return;
+    if (projects.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">Nu există proiecte salvate.</td></tr>';
+        return;
+    }
+    body.innerHTML = projects.map(p => `
+        <tr>
+            <td>${p.date.split(',')[0]}</td>
+            <td style="font-weight:bold;">${p.name}</td>
+            <td>${p.client || '-'}</td>
+            <td>${p.totalWeight.toFixed(2)} kg</td>
+            <td style="display:flex; gap:5px; justify-content:center;">
+                <button class="btn-add" style="padding: 4px 8px;" onclick="loadProjectFromHistory(${p.id})" title="Încarcă">📂</button>
+                <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory(${p.id})" title="Șterge">🗑️</button>
+            </td>
+        </tr>`).reverse().join('');
+}
+
+function loadProjectFromHistory(id) {
+    const projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const p = projects.find(x => x.id === id);
+    if (!p || !confirm(`Încarci proiectul "${p.name}"?`)) return;
+    
+    // Clear current data and load saved data
+    Object.keys(tableData).forEach(k => {
+        tableData[k] = p.data[k] || [];
+    });
+    
+    document.getElementById('projName').value = p.name;
+    document.getElementById('projClient').value = p.client || '';
+    document.getElementById('projCUI').value = p.cui || '';
+    document.getElementById('projAdresa').value = p.adresa || '';
+    
+    Object.keys(tableData).forEach(t => renderTable(t));
+    recalcAll();
+    showToast('Proiect încărcat!');
+    document.getElementById('tabEtrieri').click();
+}
+
+function deleteProjectFromHistory(id) {
+    if (!confirm('Ștergi proiectul?')) return;
+    let projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    localStorage.setItem('arm_projects', JSON.stringify(projects.filter(x => x.id !== id)));
+    renderHistory();
 }
 
 

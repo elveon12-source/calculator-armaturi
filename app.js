@@ -324,12 +324,13 @@ function calcArcade() {
     const D = parseFloat(document.getElementById('arcD').value) || 0;
     const H = parseFloat(document.getElementById('arcH').value) || 0;
     const n = parseInt(document.getElementById('arcBuc').value) || 0;
-    const lb = (Math.PI*(D/2) + 2*H)/100; const lt = lb*n; 
+    const hLeg = Math.max(0, H - (D/2));
+    const lb = (Math.PI*(D/2) + 2*hLeg)/100; const lt = lb*n; 
     const gs = (dExt - gros) * gros * 0.0246615;
-    const gt = lt*gs; const p = gt*getPretKg(); const hm = H + (D/2);
+    const gt = lt*gs; const p = gt*getPretKg();
     animateValue('arcLungBuc', lb.toFixed(2)); animateValue('arcLungTot', lt.toFixed(2));
     animateValue('arcGSp', gs.toFixed(3)); animateValue('arcGTot', gt.toFixed(2));
-    animateValue('arcHMid', hm.toFixed(2)); animateValue('arcPret', p.toFixed(2));
+    animateValue('arcPret', p.toFixed(2));
     updateDimText('dimArcadaD', D); updateDimText('dimArcadaH', H); 
     updateDimText('dimArcadaDiam', dExt); updateDimText('dimArcadaGros', gros);
 }
@@ -412,7 +413,11 @@ function calcRowValues(type, row) {
     switch(type) {
         case 'etrieri': row.lungBuc = (2*(row.A+row.B) + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
         case 'agrafe': row.lungBuc = (row.L + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
-        case 'arcade': row.hMid = (parseFloat(row.H)||0) + ((parseFloat(row.D)||0)/2); row.lungBuc = (Math.PI*(row.D/2) + 2*row.H)/100; row.gSp = ((row.diamExt||33.7) - (row.grosime||2)) * (row.grosime||2) * 0.0246615; break;
+        case 'arcade': 
+            const hLeg = Math.max(0, (parseFloat(row.H)||0) - ((parseFloat(row.D)||0)/2));
+            row.lungBuc = (Math.PI*(row.D/2) + 2*hLeg)/100; 
+            row.gSp = ((row.diamExt||33.7) - (row.grosime||2)) * (row.grosime||2) * 0.0246615; 
+            break;
         case 'profileU': row.lungBuc = (row.A+row.B+row.C)/100; row.gSp = greutateSpecifica(row.diam); break;
         case 'bare': row.lungBuc = row.L/100; row.gSp = greutateSpecificaBare(row.diam); break;
         case 'sarma': row.gSp = weightsSarma[row.diam]||0; row.gTot = row.L*row.buc*row.gSp; break;
@@ -515,7 +520,7 @@ function updateTableRow(type, id, field, value) {
     const setEl = (sfx, val) => { const e = document.getElementById(`${p}_${sfx}`); if (e) e.textContent = val; };
     if (['etrieri','agrafe','profileU','bare','arcade'].includes(type)) {
         setEl('lungBuc', row.lungBuc.toFixed(2)); setEl('lungTot', row.lungTot.toFixed(2));
-        setEl('gSp', row.gSp.toFixed(3)); if (type==='arcade') setEl('hMid', row.hMid.toFixed(2));
+        setEl('gSp', row.gSp.toFixed(3));
     } else if (type==='sarma') { setEl('lungTot', (row.L*row.buc).toFixed(2)); setEl('gSp', row.gSp.toFixed(3)); }
     else if (type==='tabla') setEl('mpTot', row.mpTot.toFixed(2));
     else if (type==='cornier') { setEl('lungTot', (row.L*row.buc).toFixed(2)); setEl('gSp', row.gSp.toFixed(3)); }
@@ -568,7 +573,7 @@ function renderTable(type) {
             }
             if (type==='etrieri') html += `<td>${inp('A', row.A)}</td><td>${inp('B', row.B)}</td><td>${inp('cioc', row.cioc)}</td>`;
             if (type==='agrafe') html += `<td>${inp('L', row.L)}</td><td>${inp('cioc', row.cioc)}</td>`;
-            if (type==='arcade') html += `<td>${inp('D', row.D)}</td><td>${inp('H', row.H)}</td><td>${comp('hMid', row.hMid.toFixed(2))}</td>`;
+            if (type==='arcade') html += `<td>${inp('D', row.D)}</td><td>${inp('H', row.H)}</td>`;
             if (type==='profileU') html += `<td>${inp('A', row.A)}</td><td>${inp('B', row.B)}</td><td>${inp('C', row.C)}</td>`;
             if (type==='bare') html += `<td>${inp('L', row.L, 10)}</td>`;
             html += `<td>${comp('lungBuc', row.lungBuc.toFixed(2))}</td><td>${inp('buc', row.buc, 1)}</td>`;
@@ -650,7 +655,7 @@ async function exportAllToExcel() {
                 let headers = [];
                 if (t === 'etrieri') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'A (cm)', 'B (cm)', 'Cioc (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'agrafe') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'L (cm)', 'Cioc (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
-                else if (t === 'arcade') headers = ['Nr', 'Marca', 'D.Ext (mm)', 'Grosime (mm)', 'D (cm)', 'H (cm)', 'H Mid (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'arcade') headers = ['Nr', 'Marca', 'D.Ext (mm)', 'Grosime (mm)', 'D (cm)', 'H Total (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'profileU') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'A (cm)', 'B (cm)', 'C (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'bare') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'L (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'sarma') headers = ['Nr', 'Marca', 'Tip', 'Diam', 'Lung (m)', 'Buc', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
@@ -669,7 +674,7 @@ async function exportAllToExcel() {
                     let rowVals = [];
                     if (t === 'etrieri') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.A, r.B, r.cioc, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'agrafe') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.L, r.cioc, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
-                    else if (t === 'arcade') rowVals = [idx+1, r.marca, r.diamExt, r.grosime, r.D, r.H, r.hMid, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    else if (t === 'arcade') rowVals = [idx+1, r.marca, r.diamExt, r.grosime, r.D, r.H, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'profileU') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.A, r.B, r.C, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'bare') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.L, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'sarma') rowVals = [idx+1, r.marca, r.tip, r.diam, r.L, r.buc, (r.L*r.buc), r.gSp, r.gTot, r.pret];
@@ -784,7 +789,7 @@ function printToPDF() {
                     let detalii = "";
                     if (type === 'etrieri') detalii = `${r.A}x${r.B} cm (c:${r.cioc} cm)`;
                     else if (type === 'agrafe') detalii = `L:${r.L} cm | Ciocauri:${r.cioc} cm`;
-                    else if (type === 'arcade') detalii = `Teava ${r.diamExt}x${r.grosime} | D:${r.D} cm H:${r.H} cm`;
+                    else if (type === 'arcade') detalii = `Teava ${r.diamExt}x${r.grosime} | D:${r.D} cm H.Tot:${r.H} cm`;
                     else if (type === 'profileU') detalii = `${r.A}+${r.B}+${r.C} cm`;
                     else if (type === 'bare') detalii = `Bara dreapta L=${r.L} cm`;
                     else detalii = r.tip || r.model || r.dim || "-";

@@ -347,11 +347,11 @@
                             <line x1="290" y1="295" x2="290" y2="305" stroke="#34d399" stroke-width="1.5"/>
                             <text x="200" y="322" text-anchor="middle" fill="#34d399" font-size="15" font-weight="700" font-family="JetBrains Mono">D = <tspan id="dimArcadaD">60</tspan> cm</text>
                             
-                            <!-- Dim H (height of legs) -->
-                            <line x1="80" y1="140" x2="80" y2="280" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3"/>
-                            <line x1="75" y1="140" x2="85" y2="140" stroke="#f87171" stroke-width="1.5"/>
+                            <!-- Dim H (Total Height) -->
+                            <line x1="80" y1="50" x2="80" y2="280" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 3"/>
+                            <line x1="75" y1="50" x2="85" y2="50" stroke="#f87171" stroke-width="1.5"/>
                             <line x1="75" y1="280" x2="85" y2="280" stroke="#f87171" stroke-width="1.5"/>
-                            <text x="58" y="215" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700" font-family="JetBrains Mono" transform="rotate(-90, 58, 215)">H = <tspan id="dimArcadaH">40</tspan> cm</text>
+                            <text x="58" y="165" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700" font-family="JetBrains Mono" transform="rotate(-90, 58, 165)">H_total = <tspan id="dimArcadaH">70</tspan> cm</text>
                             
                             <!-- Arc label -->
                             <text x="200" y="75" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="600" font-family="Inter">Arc = π×D/2</text>
@@ -373,7 +373,7 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group"><label for="arcD">Deschidere D (cm)</label><input type="number" id="arcD" value="60" min="1" step="0.5" oninput="calcArcade()"></div>
-                            <div class="form-group"><label for="arcH">Înălțime H (cm)</label><input type="number" id="arcH" value="40" min="1" step="0.5" oninput="calcArcade()"></div>
+                            <div class="form-group"><label for="arcH">Înălțime Totală H (cm)</label><input type="number" id="arcH" value="70" min="1" step="0.5" oninput="calcArcade()"></div>
                             <div class="form-group"><label for="arcBuc">Nr. Bucăți</label><input type="number" id="arcBuc" value="20" min="1" step="1" oninput="calcArcade()"></div>
                         </div>
                     </form>
@@ -398,11 +398,7 @@
                             <span class="result-value" id="arcGTot">21.50</span>
                             <span class="result-unit">kg</span>
                         </div>
-                        <div class="result-card">
-                            <span class="result-label">H.Mijloc</span>
-                            <span class="result-value" id="arcHMid">70.00</span>
-                            <span class="result-unit">cm</span>
-                        </div>
+
                         <div class="result-card price-card">
                             <span class="result-label">Cost Tot</span>
                             <span class="result-value" id="arcPret">96.75</span>
@@ -415,7 +411,7 @@
                 <div class="card-header"><h3>Tabel Arcade</h3><button class="btn-add" onclick="addRow('arcade')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
                 <div class="table-wrapper">
                     <table id="tableArcade">
-                            <thead><tr><th>Nr.</th><th>Marcă</th><th>D.Ext</th><th>Gros.</th><th>D</th><th>H</th><th>H.Mijloc</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                            <thead><tr><th>Nr.</th><th>Marcă</th><th>D.Ext</th><th>Gros.</th><th>D</th><th>H.Total</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
                             <tbody id="tbodyArcade"></tbody>
                             <tfoot><tr class="total-row"><td colspan="8">TOTAL</td><td id="totalArcLung">-</td><td></td><td id="totalArcGreut">-</td><td id="totalArcPret">-</td><td></td></tr></tfoot>
                     </table>

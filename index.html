@@ -325,7 +325,7 @@
         <section class="tab-panel" id="panel-arcade">
             <div class="panel-grid">
                 <div class="diagram-card">
-                    <div class="card-header"><h3>Schiță Arcadă Semi-rotund</h3><span class="badge badge-blue">Vizualizare</span></div>
+                    <div class="card-header"><h3>Schiță Arcadă Țeavă Rotundă</h3><span class="badge badge-blue">Vizualizare</span></div>
                     <div class="diagram-container" id="diagramArcada">
                         <svg viewBox="0 0 400 340" class="diagram-svg">
                             <defs>
@@ -356,7 +356,7 @@
                             <!-- Arc label -->
                             <text x="200" y="75" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="600" font-family="Inter">Arc = π×D/2</text>
                             
-                        <text x="200" y="30" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="13" font-weight="500" font-family="Inter">Ø<tspan id="dimArcadaDiam">10</tspan> mm</text>
+                        <text x="200" y="30" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="13" font-weight="500" font-family="Inter"><tspan id="dimArcadaDiam">33.7</tspan>x<tspan id="dimArcadaGros">2</tspan> mm</text>
                         </svg>
                     </div>
                     </div>
@@ -368,8 +368,8 @@
                             <div class="form-group full-width"><label for="arcMarca">Marcaj (Marca)</label><input type="text" id="arcMarca" placeholder="Ex: Arc.1, Boltă..." oninput="calcArcade()"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label for="arcDiam">Diametru (mm)</label><select id="arcDiam" onchange="calcArcade()"><option value="6">Ø6</option><option value="8">Ø8</option><option value="10" selected>Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
-                            <div class="form-group"><label for="arcClasa">Clasă Oțel</label><select id="arcClasa" onchange="calcArcade()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                            <div class="form-group"><label for="arcDiam">Diam. Ext (mm)</label><input type="number" id="arcDiam" value="33.7" min="10" step="0.1" oninput="calcArcade()"></div>
+                            <div class="form-group"><label for="arcGrosime">Grosime (mm)</label><input type="number" id="arcGrosime" value="2.0" min="0.5" step="0.1" oninput="calcArcade()"></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group"><label for="arcD">Deschidere D (cm)</label><input type="number" id="arcD" value="60" min="1" step="0.5" oninput="calcArcade()"></div>
@@ -415,7 +415,7 @@
                 <div class="card-header"><h3>Tabel Arcade</h3><button class="btn-add" onclick="addRow('arcade')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
                 <div class="table-wrapper">
                     <table id="tableArcade">
-                            <thead><tr><th>Nr.</th><th>Marcă</th><th>Ø</th><th>Clasă</th><th>D</th><th>H</th><th>H.Mijloc</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                            <thead><tr><th>Nr.</th><th>Marcă</th><th>D.Ext</th><th>Gros.</th><th>D</th><th>H</th><th>H.Mijloc</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
                             <tbody id="tbodyArcade"></tbody>
                             <tfoot><tr class="total-row"><td colspan="8">TOTAL</td><td id="totalArcLung">-</td><td></td><td id="totalArcGreut">-</td><td id="totalArcPret">-</td><td></td></tr></tfoot>
                     </table>

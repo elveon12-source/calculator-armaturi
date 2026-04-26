@@ -319,16 +319,19 @@ function calcAgrafe() {
 }
 
 function calcArcade() {
-    const d = parseFloat(document.getElementById('arcDiam').value);
+    const dExt = parseFloat(document.getElementById('arcDiam').value) || 33.7;
+    const gros = parseFloat(document.getElementById('arcGrosime').value) || 2.0;
     const D = parseFloat(document.getElementById('arcD').value) || 0;
     const H = parseFloat(document.getElementById('arcH').value) || 0;
     const n = parseInt(document.getElementById('arcBuc').value) || 0;
-    const lb = (Math.PI*(D/2) + 2*H)/100; const lt = lb*n; const gs = greutateSpecifica(d);
+    const lb = (Math.PI*(D/2) + 2*H)/100; const lt = lb*n; 
+    const gs = (dExt - gros) * gros * 0.0246615;
     const gt = lt*gs; const p = gt*getPretKg(); const hm = H + (D/2);
     animateValue('arcLungBuc', lb.toFixed(2)); animateValue('arcLungTot', lt.toFixed(2));
     animateValue('arcGSp', gs.toFixed(3)); animateValue('arcGTot', gt.toFixed(2));
     animateValue('arcHMid', hm.toFixed(2)); animateValue('arcPret', p.toFixed(2));
-    updateDimText('dimArcadaD', D); updateDimText('dimArcadaH', H); updateDimText('dimArcadaDiam', d);
+    updateDimText('dimArcadaD', D); updateDimText('dimArcadaH', H); 
+    updateDimText('dimArcadaDiam', dExt); updateDimText('dimArcadaGros', gros);
 }
 
 function calcProfileU() {
@@ -409,7 +412,7 @@ function calcRowValues(type, row) {
     switch(type) {
         case 'etrieri': row.lungBuc = (2*(row.A+row.B) + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
         case 'agrafe': row.lungBuc = (row.L + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
-        case 'arcade': row.hMid = (parseFloat(row.H)||0) + ((parseFloat(row.D)||0)/2); row.lungBuc = (Math.PI*(row.D/2) + 2*row.H)/100; row.gSp = greutateSpecifica(row.diam); break;
+        case 'arcade': row.hMid = (parseFloat(row.H)||0) + ((parseFloat(row.D)||0)/2); row.lungBuc = (Math.PI*(row.D/2) + 2*row.H)/100; row.gSp = ((row.diamExt||33.7) - (row.grosime||2)) * (row.grosime||2) * 0.0246615; break;
         case 'profileU': row.lungBuc = (row.A+row.B+row.C)/100; row.gSp = greutateSpecifica(row.diam); break;
         case 'bare': row.lungBuc = row.L/100; row.gSp = greutateSpecificaBare(row.diam); break;
         case 'sarma': row.gSp = weightsSarma[row.diam]||0; row.gTot = row.L*row.buc*row.gSp; break;
@@ -452,8 +455,8 @@ function addRow(type) {
             }; break;
         case 'arcade': 
             row = { id: nr, marca: finalMarca, 
-                diam: parseInt(getVal('arcDiam'))||10, 
-                clasa: getVal('arcClasa')||'BST500S', 
+                diamExt: getNum('arcDiam')||33.7, 
+                grosime: getNum('arcGrosime')||2.0, 
                 D: getNum('arcD')||60, 
                 H: getNum('arcH')||40, 
                 buc: parseInt(getVal('arcBuc'))||20 
@@ -556,8 +559,13 @@ function renderTable(type) {
             html += `<td>${inp('L', row.L, 1)}</td><td>${inp('buc', row.buc, 1)}</td>`;
             html += `<td>${comp('lungTot', (row.L*row.buc).toFixed(2))} m</td><td>${comp('gSp', row.gSp.toFixed(3))}</td>`;
         } else {
-            html += `<td><select onchange="updateTableRow('${type}', ${row.id}, 'diam', this.value)">${diameterOptions(row.diam)}</select></td>`;
-            html += `<td><select onchange="updateTableRow('${type}', ${row.id}, 'clasa', this.value)">${clasaOptions(row.clasa)}</select></td>`;
+            if (type === 'arcade') {
+                html += `<td>${inp('diamExt', row.diamExt||33.7, 0.1)}</td>`;
+                html += `<td>${inp('grosime', row.grosime||2, 0.1)}</td>`;
+            } else {
+                html += `<td><select onchange="updateTableRow('${type}', ${row.id}, 'diam', this.value)">${diameterOptions(row.diam)}</select></td>`;
+                html += `<td><select onchange="updateTableRow('${type}', ${row.id}, 'clasa', this.value)">${clasaOptions(row.clasa)}</select></td>`;
+            }
             if (type==='etrieri') html += `<td>${inp('A', row.A)}</td><td>${inp('B', row.B)}</td><td>${inp('cioc', row.cioc)}</td>`;
             if (type==='agrafe') html += `<td>${inp('L', row.L)}</td><td>${inp('cioc', row.cioc)}</td>`;
             if (type==='arcade') html += `<td>${inp('D', row.D)}</td><td>${inp('H', row.H)}</td><td>${comp('hMid', row.hMid.toFixed(2))}</td>`;
@@ -590,8 +598,12 @@ function updateTableTotals(type) {
     if (summaryEl) {
         if (data.length === 0) summaryEl.innerHTML = '';
         else {
-            const gr = {}; data.forEach(r => { const d = r.diam; gr[d] = (gr[d]||0) + r.gTot; });
-            const pts = Object.keys(gr).sort((a,b)=>parseFloat(a)-parseFloat(b)).map(d => `<span class="summary-chip"><b>Diam${d}</b>: ${gr[d].toFixed(2)} kg</span>`);
+            const gr = {}; 
+            data.forEach(r => { 
+                const d = type === 'arcade' ? (r.diamExt + "x" + r.grosime) : r.diam; 
+                gr[d] = (gr[d]||0) + r.gTot; 
+            });
+            const pts = Object.keys(gr).sort().map(d => `<span class="summary-chip"><b>${type === 'arcade' ? 'Țeavă ' : 'Diam'}${d}</b>: ${gr[d].toFixed(2)} kg</span>`);
             summaryEl.innerHTML = `<span class="summary-title">Rezumat Diametre:</span> ${pts.join(' ')}`;
         }
     }
@@ -638,7 +650,7 @@ async function exportAllToExcel() {
                 let headers = [];
                 if (t === 'etrieri') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'A (cm)', 'B (cm)', 'Cioc (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'agrafe') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'L (cm)', 'Cioc (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
-                else if (t === 'arcade') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'D (cm)', 'H (cm)', 'H Mid (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'arcade') headers = ['Nr', 'Marca', 'D.Ext (mm)', 'Grosime (mm)', 'D (cm)', 'H (cm)', 'H Mid (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'profileU') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'A (cm)', 'B (cm)', 'C (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'bare') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'L (cm)', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'sarma') headers = ['Nr', 'Marca', 'Tip', 'Diam', 'Lung (m)', 'Buc', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
@@ -657,7 +669,7 @@ async function exportAllToExcel() {
                     let rowVals = [];
                     if (t === 'etrieri') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.A, r.B, r.cioc, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'agrafe') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.L, r.cioc, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
-                    else if (t === 'arcade') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.D, r.H, r.hMid, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    else if (t === 'arcade') rowVals = [idx+1, r.marca, r.diamExt, r.grosime, r.D, r.H, r.hMid, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'profileU') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.A, r.B, r.C, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'bare') rowVals = [idx+1, r.marca, r.diam, r.clasa, r.L, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
                     else if (t === 'sarma') rowVals = [idx+1, r.marca, r.tip, r.diam, r.L, r.buc, (r.L*r.buc), r.gSp, r.gTot, r.pret];
@@ -752,7 +764,7 @@ function printToPDF() {
         if (tableData[type].length > 0) {
             const grouped = {};
             tableData[type].forEach(r => {
-                const d = r.diam || r.dim || "Diverse";
+                const d = type === 'arcade' ? (r.diamExt + "x" + r.grosime) : (r.diam || r.dim || "Diverse");
                 if (!grouped[d]) grouped[d] = [];
                 grouped[d].push(r);
             });
@@ -772,7 +784,7 @@ function printToPDF() {
                     let detalii = "";
                     if (type === 'etrieri') detalii = `${r.A}x${r.B} cm (c:${r.cioc} cm)`;
                     else if (type === 'agrafe') detalii = `L:${r.L} cm | Ciocauri:${r.cioc} cm`;
-                    else if (type === 'arcade') detalii = `D:${r.D} cm | H:${r.H} cm`;
+                    else if (type === 'arcade') detalii = `Teava ${r.diamExt}x${r.grosime} | D:${r.D} cm H:${r.H} cm`;
                     else if (type === 'profileU') detalii = `${r.A}+${r.B}+${r.C} cm`;
                     else if (type === 'bare') detalii = `Bara dreapta L=${r.L} cm`;
                     else detalii = r.tip || r.model || r.dim || "-";
@@ -800,8 +812,9 @@ function printToPDF() {
     });
 
     content += `<div class="grand-summary"><h2>REZUMAT TOTAL DIAMETRE</h2>`;
-    Object.keys(globalDiamSums).sort((a,b)=>parseFloat(a)-parseFloat(b)).forEach(d => {
-        content += `<div class="summary-item"><span>Fier Diametru Ø${d}</span><span>${globalDiamSums[d].toFixed(2)} kg</span></div>`;
+    Object.keys(globalDiamSums).sort().forEach(d => {
+        const isArcade = d.includes('x');
+        content += `<div class="summary-item"><span>${isArcade ? 'Teava Rotunda' : 'Fier Diametru'} ${isArcade ? '' : 'Ø'}${d}</span><span>${globalDiamSums[d].toFixed(2)} kg</span></div>`;
     });
     content += `<div class="summary-item"><span>TOTAL GENERAL PROIECT</span><span>${totalWeight.toFixed(2)} kg</span></div></div>`;
     content += `<div class="footer"><p>Raport Tehnic Profesional - Automatizat</p></div>`;

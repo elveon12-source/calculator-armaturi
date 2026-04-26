@@ -921,6 +921,27 @@ async function lookupCUI() {
     }
 }
 
+function saveQuickPF() {
+    const nume = document.getElementById('etrQuickNume').value.trim();
+    if (!nume) { showToast('Introdu numele clientului / lucrării!'); return; }
+    
+    // Set the global project details (syncing with the Proiecte tab)
+    document.getElementById('projClient').value = nume;
+    document.getElementById('projAdresa').value = document.getElementById('etrQuickAdresa').value.trim();
+    document.getElementById('projCUI').value = '';
+    
+    // Auto-generate project name
+    const dateStr = new Date().toLocaleDateString('ro-RO');
+    document.getElementById('projName').value = `Proiect ${nume} - ${dateStr}`;
+    
+    // Save to history
+    saveCurrentProject();
+    
+    // Optional feedback
+    document.getElementById('etrQuickNume').value = '';
+    document.getElementById('etrQuickAdresa').value = '';
+}
+
 function saveCurrentProject() {
     const name = document.getElementById('projName').value.trim();
     if (!name) { showToast('Nume proiect obligatoriu!'); return; }

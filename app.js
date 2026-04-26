@@ -413,11 +413,12 @@ function calcRowValues(type, row) {
     switch(type) {
         case 'etrieri': row.lungBuc = (2*(row.A+row.B) + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
         case 'agrafe': row.lungBuc = (row.L + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
-        case 'arcade': 
+        case 'arcade': {
             const hLeg = Math.max(0, (parseFloat(row.H)||0) - ((parseFloat(row.D)||0)/2));
             row.lungBuc = (Math.PI*(row.D/2) + 2*hLeg)/100; 
             row.gSp = ((row.diamExt||33.7) - (row.grosime||2)) * (row.grosime||2) * 0.0246615; 
             break;
+        }
         case 'profileU': row.lungBuc = (row.A+row.B+row.C)/100; row.gSp = greutateSpecifica(row.diam); break;
         case 'bare': row.lungBuc = row.L/100; row.gSp = greutateSpecificaBare(row.diam); break;
         case 'sarma': row.gSp = weightsSarma[row.diam]||0; row.gTot = row.L*row.buc*row.gSp; break;

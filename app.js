@@ -955,7 +955,8 @@ function saveCurrentProject() {
         cui: document.getElementById('projCUI').value,
         adresa: document.getElementById('projAdresa').value,
         data: JSON.parse(JSON.stringify(tableData)),
-        totalWeight: parseFloat(document.getElementById('grandTotalWeight').textContent) || 0
+        totalWeight: parseFloat(document.getElementById('grandTotalWeight').textContent) || 0,
+        completed: false
     };
     projects.push(newProj);
     localStorage.setItem('arm_projects', JSON.stringify(projects));
@@ -968,20 +969,42 @@ function renderHistory() {
     const body = document.getElementById('historyTableBody');
     if (!body) return;
     if (projects.length === 0) {
-        body.innerHTML = '<tr><td colspan="5" style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">Nu există proiecte salvate.</td></tr>';
+        body.innerHTML = '<tr><td colspan="6" style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">Nu există proiecte salvate.</td></tr>';
         return;
     }
-    body.innerHTML = projects.map(p => `
-        <tr>
-            <td>${p.date.split(',')[0]}</td>
-            <td style="font-weight:bold;">${p.name}</td>
-            <td>${p.client || '-'}</td>
-            <td>${p.totalWeight.toFixed(2)} kg</td>
+    body.innerHTML = projects.map(p => {
+        const isComp = p.completed ? 'checked' : '';
+        const rowStyle = p.completed ? 'opacity: 0.6; background-color: rgba(16, 185, 129, 0.05);' : '';
+        const textStyle = p.completed ? 'text-decoration: line-through; color: #94a3b8;' : '';
+        
+        return `
+        <tr style="${rowStyle}">
+            <td style="${textStyle}">${p.date.split(',')[0]}</td>
+            <td style="font-weight:bold; ${textStyle}">${p.name}</td>
+            <td style="${textStyle}">${p.client || '-'}</td>
+            <td style="${textStyle}">${p.totalWeight.toFixed(2)} kg</td>
+            <td>
+                <label style="display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer; color: #10b981; font-weight: 600; font-size: 13px;">
+                    <input type="checkbox" ${isComp} onchange="toggleProjectComplete(${p.id}, this.checked)" style="transform: scale(1.3); accent-color: #10b981; cursor: pointer;">
+                    ${p.completed ? 'Terminat' : ''}
+                </label>
+            </td>
             <td style="display:flex; gap:5px; justify-content:center;">
-                <button class="btn-add" style="padding: 4px 8px;" onclick="loadProjectFromHistory(${p.id})" title="Încarcă">📂</button>
+                <button class="btn-add" style="padding: 4px 8px; opacity: ${p.completed ? '0.5' : '1'};" onclick="loadProjectFromHistory(${p.id})" title="Încarcă">📂</button>
                 <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory(${p.id})" title="Șterge">🗑️</button>
             </td>
-        </tr>`).reverse().join('');
+        </tr>`;
+    }).reverse().join('');
+}
+
+function toggleProjectComplete(id, isCompleted) {
+    let projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const proj = projects.find(x => x.id === id);
+    if (proj) {
+        proj.completed = isCompleted;
+        localStorage.setItem('arm_projects', JSON.stringify(projects));
+        renderHistory();
+    }
 }
 
 function loadProjectFromHistory(id) {

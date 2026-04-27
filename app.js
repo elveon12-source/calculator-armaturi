@@ -52,8 +52,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=26`).then(reg => {
-            console.log('SW Registered [v26]');
+        navigator.serviceWorker.register(`./sw.js?v=29`).then(reg => {
+            console.log('SW Registered [v29]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {

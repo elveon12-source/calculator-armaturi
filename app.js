@@ -964,6 +964,28 @@ function saveCurrentProject() {
     renderHistory();
 }
 
+let openHistoryDetailsId = null;
+
+function toggleProjectDetails(id) {
+    if (openHistoryDetailsId === id) {
+        openHistoryDetailsId = null;
+    } else {
+        openHistoryDetailsId = id;
+    }
+    renderHistory();
+}
+
+function toggleItemComplete(projId, cat, idx, isCompleted, event) {
+    if(event) event.stopPropagation();
+    let projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const proj = projects.find(x => x.id === projId);
+    if (proj && proj.data && proj.data[cat] && proj.data[cat][idx]) {
+        proj.data[cat][idx].completed = isCompleted;
+        localStorage.setItem('arm_projects', JSON.stringify(projects));
+        renderHistory();
+    }
+}
+
 function renderHistory() {
     const projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
     const body = document.getElementById('historyTableBody');
@@ -976,24 +998,67 @@ function renderHistory() {
         const isComp = p.completed ? 'checked' : '';
         const rowStyle = p.completed ? 'opacity: 0.6; background-color: rgba(16, 185, 129, 0.05);' : '';
         const textStyle = p.completed ? 'text-decoration: line-through; color: #94a3b8;' : '';
+        const isExpanded = openHistoryDetailsId === p.id;
+        const toggleIcon = isExpanded ? '▼' : '▶';
         
+        let detailsHTML = `<tr class="history-details-row" style="display: ${isExpanded ? 'table-row' : 'none'}; background: rgba(0,0,0,0.2);">
+            <td colspan="6" style="padding: 0;">
+                <div style="max-height: 300px; overflow-y: auto; padding: 10px; border-bottom: 2px solid #3b82f6;">`;
+                
+        const validCats = Object.keys(p.data || {}).filter(cat => p.data[cat] && p.data[cat].length > 0);
+        
+        if (validCats.length === 0) {
+            detailsHTML += `<span style="color: #64748b; font-size: 13px;">Nu există materiale în acest proiect.</span>`;
+        } else {
+            detailsHTML += `<table style="width: 100%; font-size: 12px; background: transparent; margin: 0; box-shadow: none;">
+                <thead><tr style="background: rgba(255,255,255,0.05); color: #94a3b8;"><th style="width: 40px; text-align:center;">Gata</th><th>Cat.</th><th>Marcă</th><th>Detalii</th><th>Buc</th><th>Greutate</th></tr></thead>
+                <tbody>`;
+            validCats.forEach(cat => {
+                p.data[cat].forEach((item, idx) => {
+                    const checked = item.completed ? 'checked' : '';
+                    const opac = item.completed ? 'opacity: 0.4; text-decoration: line-through;' : 'opacity: 1;';
+                    
+                    let desc = '';
+                    if(cat==='etrieri') desc = `${item.A}x${item.B} c:${item.cioc}`;
+                    else if(cat==='agrafe') desc = `L:${item.L} c:${item.cioc}`;
+                    else if(cat==='arcade') desc = `D:${item.D} H:${item.H}`;
+                    else if(cat==='profileU') desc = `${item.A}+${item.B}+${item.C}`;
+                    else if(cat==='bare') desc = `L:${item.L}`;
+                    else desc = item.dim || item.diamExt || item.tip || '-';
+                    
+                    detailsHTML += `<tr style="${opac} cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02);" onclick="toggleItemComplete(${p.id}, '${cat}', ${idx}, !${item.completed || false}, event)">
+                        <td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" ${checked} style="transform: scale(1.2); accent-color: #3b82f6; cursor:pointer;" onchange="toggleItemComplete(${p.id}, '${cat}', ${idx}, this.checked, event)"></td>
+                        <td style="text-transform: capitalize; color: #60a5fa;">${cat}</td>
+                        <td style="font-weight: 600;">${item.marca || '-'}</td>
+                        <td style="color: #cbd5e1;">${desc}</td>
+                        <td>${item.buc}</td>
+                        <td style="color: #fbbf24;">${(item.gTot || 0).toFixed(2)} kg</td>
+                    </tr>`;
+                });
+            });
+            detailsHTML += `</tbody></table>`;
+        }
+        
+        detailsHTML += `</div></td></tr>`;
+
         return `
-        <tr style="${rowStyle}">
-            <td style="${textStyle}">${p.date.split(',')[0]}</td>
+        <tr style="${rowStyle} cursor: pointer; transition: 0.2s;" onclick="toggleProjectDetails(${p.id})" title="Apasă pentru detalii">
+            <td style="${textStyle}"><span style="color: #64748b; margin-right: 5px; font-size: 10px;">${toggleIcon}</span> ${p.date.split(',')[0]}</td>
             <td style="font-weight:bold; ${textStyle}">${p.name}</td>
             <td style="${textStyle}">${p.client || '-'}</td>
             <td style="${textStyle}">${p.totalWeight.toFixed(2)} kg</td>
-            <td>
+            <td onclick="event.stopPropagation()">
                 <label style="display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer; color: #10b981; font-weight: 600; font-size: 13px;">
                     <input type="checkbox" ${isComp} onchange="toggleProjectComplete(${p.id}, this.checked)" style="transform: scale(1.3); accent-color: #10b981; cursor: pointer;">
                     ${p.completed ? 'Terminat' : ''}
                 </label>
             </td>
-            <td style="display:flex; gap:5px; justify-content:center;">
+            <td style="display:flex; gap:5px; justify-content:center;" onclick="event.stopPropagation()">
                 <button class="btn-add" style="padding: 4px 8px; opacity: ${p.completed ? '0.5' : '1'};" onclick="loadProjectFromHistory(${p.id})" title="Încarcă">📂</button>
                 <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory(${p.id})" title="Șterge">🗑️</button>
             </td>
-        </tr>`;
+        </tr>
+        ${detailsHTML}`;
     }).reverse().join('');
 }
 

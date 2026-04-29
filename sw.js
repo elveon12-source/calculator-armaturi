@@ -1,4 +1,4 @@
-const CACHE_NAME = 'armaturi-pro-v29';
+const CACHE_NAME = 'armaturi-pro-v31';
 const ASSETS = [
     './',
     './index.html',
@@ -11,36 +11,50 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-    );
-});
-
-self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
-    event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-            );
+        caches.open(CACHE_NAME).then((cache) => {
+            console.log('SW: Pre-caching assets');
+            return cache.addAll(ASSETS);
         })
     );
 });
 
-// NETWORK FIRST STRATEGY (Forced)
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.map((key) => {
+                    if (key !== CACHE_NAME) {
+                        console.log('SW: Deleting old cache', key);
+                        return caches.delete(key);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
+});
+
+// STALE-WHILE-REVALIDATE STRATEGY
 self.addEventListener('fetch', (event) => {
+    // Skip non-GET requests and Firebase/Analytics (if any)
+    if (event.request.method !== 'GET' || event.request.url.includes('firebasejs')) {
+        return;
+    }
+
     event.respondWith(
-        fetch(event.request)
-            .then((response) => {
-                // If it's a valid response, cache it and return it
-                if (response && response.status === 200) {
-                    const cacheCopy = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
+        caches.match(event.request).then((cachedResponse) => {
+            const fetchPromise = fetch(event.request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    const cacheCopy = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, cacheCopy);
+                    });
                 }
-                return response;
-            })
-            .catch(() => {
-                // If network fails, use cache
-                return caches.match(event.request);
-            })
+                return networkResponse;
+            }).catch(() => {
+                // Network failure, already returning cachedResponse if available
+            });
+
+            return cachedResponse || fetchPromise;
+        })
     );
 });

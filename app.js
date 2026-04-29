@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "9.1 (Professional Desktop Dashboard)";
+const APP_VERSION = "9.3 (Professional Desktop Dashboard)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -21,68 +21,7 @@ let rowCounters = {
 
 let deferredPrompt;
 
-// ========================
-// FIREBASE CLOUD SYNC
-// ========================
-const firebaseConfig = {
-  apiKey: "AIzaSyBh5TUwVvWjedKSyriQZoeuPTLTMXV3Tqk",
-  authDomain: "calculator-armaturi.firebaseapp.com",
-  projectId: "calculator-armaturi",
-  storageBucket: "calculator-armaturi.firebasestorage.app",
-  messagingSenderId: "714017559084",
-  appId: "1:714017559084:web:ce9886df69585a8527b789",
-  measurementId: "G-905KHYNB5H"
-};
 
-let db = null;
-try {
-    if (typeof firebase !== 'undefined') {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        db.enablePersistence().catch(err => console.warn("Firestore offline persistance error:", err));
-        console.log("Firebase Cloud Firestore Initialized");
-    }
-} catch(e) {
-    console.error("Firebase init failed:", e);
-}
-
-async function executeFirebaseMigration() {
-    if (!db) return;
-    try {
-        const migrated = localStorage.getItem('migrated_to_cloud');
-        if (!migrated) {
-            const localProjects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
-            if (localProjects.length > 0) {
-                console.log("Migrating local projects to Cloud Firestore...");
-                const batch = db.batch();
-                localProjects.forEach(p => {
-                    const docRef = db.collection("arm_projects").doc(p.id.toString());
-                    batch.set(docRef, p);
-                });
-                await batch.commit();
-                console.log("Migration complete!");
-            }
-            localStorage.setItem('migrated_to_cloud', 'true');
-        }
-    } catch(err) {
-        console.error("Migration error:", err);
-    }
-}
-
-function initCloudSync() {
-    if (!db) return;
-    db.collection("arm_projects").orderBy("id", "desc").onSnapshot(snapshot => {
-        let cloudProjects = [];
-        snapshot.forEach(doc => {
-            cloudProjects.push(doc.data());
-        });
-        localStorage.setItem('arm_projects', JSON.stringify(cloudProjects));
-        localStorage.setItem('migrated_to_cloud', 'true'); // safeguard
-        renderHistory();
-    }, error => {
-        console.error("Firestore sync error:", error);
-    });
-}
 
 // ========================
 // INITIALIZATION
@@ -97,9 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recalcAll();
     ['etrieri', 'agrafe', 'arcade', 'profileU', 'bare', 'sarma', 'tabla', 'cornier'].forEach(type => renderTable(type));
     
-    if (db) {
-        executeFirebaseMigration().then(() => initCloudSync());
-    }
+
     
     const verEl = document.getElementById('appVersion');
     if (verEl) verEl.textContent = `v${APP_VERSION}`;
@@ -119,8 +56,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=29`).then(reg => {
-            console.log('SW Registered [v29]');
+        navigator.serviceWorker.register(`./sw.js?v=31`).then(reg => {
+            console.log('SW Registered [v31]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -1010,10 +947,29 @@ function saveQuickPF() {
     document.getElementById('etrQuickAdresa').value = '';
 }
 
+function getProjectsFromStorage() {
+    try {
+        const saved = localStorage.getItem('arm_projects');
+        if (!saved) return [];
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        console.error("Storage error:", e);
+        return [];
+    }
+}
+
 function saveCurrentProject() {
-    const name = document.getElementById('projName').value.trim();
-    if (!name) { showToast('Nume proiect obligatoriu!'); return; }
-    const projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const nameInput = document.getElementById('projName');
+    const name = nameInput ? nameInput.value.trim() : '';
+    
+    if (!name) { 
+        showToast('Nume proiect obligatoriu!'); 
+        return; 
+    }
+    
+    let projects = getProjectsFromStorage();
+
     const newProj = {
         id: Date.now(),
         date: new Date().toLocaleString('ro-RO'),
@@ -1025,27 +981,10 @@ function saveCurrentProject() {
         totalWeight: parseFloat(document.getElementById('grandTotalWeight').textContent) || 0,
         completed: false
     };
-    
-    if (db) {
-        db.collection("arm_projects").doc(newProj.id.toString()).set(newProj)
-        .then(() => {
-            showToast('Proiect salvat în Cloud!');
-            // UI refresh is handled automatically by onSnapshot
-        })
-        .catch(err => {
-            console.error("Cloud save failed:", err);
-            saveLocalFallback(newProj);
-        });
-    } else {
-        saveLocalFallback(newProj);
-    }
-}
 
-function saveLocalFallback(newProj) {
-    let projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
     projects.push(newProj);
     localStorage.setItem('arm_projects', JSON.stringify(projects));
-    showToast('Proiect salvat (Offline)!');
+    showToast('Proiect salvat!');
     renderHistory();
 }
 
@@ -1062,28 +1001,17 @@ function toggleProjectDetails(id) {
 
 function toggleItemComplete(projId, cat, idx, isCompleted, event) {
     if(event) event.stopPropagation();
-    let projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    let projects = getProjectsFromStorage();
     const proj = projects.find(x => x.id === projId);
-    if (!proj || !proj.data || !proj.data[cat] || !proj.data[cat][idx]) return;
-    
-    proj.data[cat][idx].completed = isCompleted;
-    
-    if (db) {
-        // Optimistic UI update
-        localStorage.setItem('arm_projects', JSON.stringify(projects));
-        renderHistory();
-        
-        db.collection("arm_projects").doc(projId.toString()).update({
-            [`data.${cat}`]: proj.data[cat]
-        }).catch(err => console.error("Could not update item completion in cloud:", err));
-    } else {
+    if (proj && proj.data && proj.data[cat] && proj.data[cat][idx]) {
+        proj.data[cat][idx].completed = isCompleted;
         localStorage.setItem('arm_projects', JSON.stringify(projects));
         renderHistory();
     }
 }
 
 function renderHistory() {
-    const projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const projects = getProjectsFromStorage();
     const body = document.getElementById('historyTableBody');
     if (!body) return;
     if (projects.length === 0) {
@@ -1159,24 +1087,17 @@ function renderHistory() {
 }
 
 function toggleProjectComplete(id, isCompleted) {
-    let projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    let projects = getProjectsFromStorage();
     const proj = projects.find(x => x.id === id);
     if (proj) {
         proj.completed = isCompleted;
-        if (db) {
-            localStorage.setItem('arm_projects', JSON.stringify(projects));
-            renderHistory();
-            db.collection("arm_projects").doc(id.toString()).update({ completed: isCompleted })
-              .catch(err => console.error("Failed to update general completion in Cloud:", err));
-        } else {
-            localStorage.setItem('arm_projects', JSON.stringify(projects));
-            renderHistory();
-        }
+        localStorage.setItem('arm_projects', JSON.stringify(projects));
+        renderHistory();
     }
 }
 
 function loadProjectFromHistory(id) {
-    const projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
+    const projects = getProjectsFromStorage();
     const p = projects.find(x => x.id === id);
     if (!p || !confirm(`Încarci proiectul "${p.name}"?`)) return;
     
@@ -1197,15 +1118,10 @@ function loadProjectFromHistory(id) {
 }
 
 function deleteProjectFromHistory(id) {
-    if (!confirm('Ștergi proiectul? Această acțiune este permanentă.')) return;
-    
-    if (db) {
-        db.collection("arm_projects").doc(id.toString()).delete().catch(err => console.error("Delete failed:", err));
-    } else {
-        let projects = JSON.parse(localStorage.getItem('arm_projects') || '[]');
-        localStorage.setItem('arm_projects', JSON.stringify(projects.filter(x => x.id !== id)));
-        renderHistory();
-    }
+    if (!confirm('Ștergi proiectul?')) return;
+    let projects = getProjectsFromStorage();
+    localStorage.setItem('arm_projects', JSON.stringify(projects.filter(x => x.id !== id)));
+    renderHistory();
 }
 
 

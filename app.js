@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "9.6 (Professional Desktop Dashboard)";
+const APP_VERSION = "9.7 (Professional Desktop Dashboard)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -148,8 +148,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=34`).then(reg => {
-            console.log('SW Registered [v34]');
+        navigator.serviceWorker.register(`./sw.js?v=35`).then(reg => {
+            console.log('SW Registered [v35]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {

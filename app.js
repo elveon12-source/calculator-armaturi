@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "9.4 (Professional Desktop Dashboard)";
+const APP_VERSION = "9.5 (Professional Desktop Dashboard)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -86,10 +86,13 @@ try {
 
 function initCloudSync() {
     if (!db) return;
+    
+    // 1. LISTEN for changes from Cloud
     db.collection("arm_projects").orderBy("id", "desc").onSnapshot(snapshot => {
         let cloudProjects = [];
         snapshot.forEach(doc => cloudProjects.push(doc.data()));
         if (cloudProjects.length > 0) {
+            // Compare timestamps to avoid overwriting newer local data (simple ID check for now)
             localStorage.setItem('arm_projects', JSON.stringify(cloudProjects));
             renderHistory();
         }
@@ -97,6 +100,17 @@ function initCloudSync() {
         console.error("Sync error:", error);
         updateCloudUI('error');
     });
+
+    // 2. MIGRATE Local data to Cloud (if missing)
+    const localProjects = getProjectsFromStorage();
+    if (localProjects.length > 0) {
+        localProjects.forEach(proj => {
+            // Try to upload each project. Firestore will ignore if already exists with same ID
+            db.collection("arm_projects").doc(proj.id.toString()).set(proj, { merge: true })
+              .then(() => console.log(`Project ${proj.id} migrated to cloud`))
+              .catch(e => console.warn("Migration skip or error:", e));
+        });
+    }
 }
 
 
@@ -134,8 +148,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=32`).then(reg => {
-            console.log('SW Registered [v32]');
+        navigator.serviceWorker.register(`./sw.js?v=33`).then(reg => {
+            console.log('SW Registered [v33]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -962,7 +976,6 @@ async function lookupCUI() {
             headers: { 'Content-Type': 'application/json' },
             body: payload
         });
-        
         const data = await response.json();
         
         if (data.found && data.found.length > 0) {

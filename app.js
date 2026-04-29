@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "9.3 (Professional Desktop Dashboard)";
+const APP_VERSION = "9.4 (Professional Desktop Dashboard)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -20,6 +20,84 @@ let rowCounters = {
 };
 
 let deferredPrompt;
+
+// ========================
+// FIREBASE SAFE CLOUD SYNC
+// ========================
+const firebaseConfig = {
+  apiKey: "AIzaSyBh5TUwVvWjedKSyriQZoeuPTLTMXV3Tqk",
+  authDomain: "calculator-armaturi.firebaseapp.com",
+  projectId: "calculator-armaturi",
+  storageBucket: "calculator-armaturi.firebasestorage.app",
+  messagingSenderId: "714017559084",
+  appId: "1:714017559084:web:ce9886df69585a8527b789",
+  measurementId: "G-905KHYNB5H"
+};
+
+let db = null;
+let isCloudActive = false;
+
+function updateCloudUI(status) {
+    const el = document.getElementById('cloudStatus');
+    const txt = document.getElementById('cloudStatusText');
+    if (!el || !txt) return;
+    
+    el.classList.remove('active', 'error');
+    if (status === 'connected') {
+        el.classList.add('active');
+        txt.textContent = 'Sincronizat';
+        isCloudActive = true;
+    } else if (status === 'error') {
+        el.classList.add('error');
+        txt.textContent = 'Eroare (Vezi Consola)';
+        isCloudActive = false;
+    } else {
+        txt.textContent = 'Mod Local';
+        isCloudActive = false;
+    }
+}
+
+try {
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        db.enablePersistence().catch(() => {});
+        
+        // Safety check: if we can't read after 5s, we are probably not configured in console
+        const timeout = setTimeout(() => {
+            if (!isCloudActive) updateCloudUI('local');
+        }, 5000);
+
+        db.collection("arm_projects").limit(1).get()
+          .then(() => {
+              clearTimeout(timeout);
+              updateCloudUI('connected');
+              initCloudSync();
+          })
+          .catch(err => {
+              clearTimeout(timeout);
+              console.warn("Firestore access denied. Did you create the database?", err);
+              updateCloudUI('error');
+          });
+    }
+} catch(e) {
+    console.error("Firebase init failed:", e);
+}
+
+function initCloudSync() {
+    if (!db) return;
+    db.collection("arm_projects").orderBy("id", "desc").onSnapshot(snapshot => {
+        let cloudProjects = [];
+        snapshot.forEach(doc => cloudProjects.push(doc.data()));
+        if (cloudProjects.length > 0) {
+            localStorage.setItem('arm_projects', JSON.stringify(cloudProjects));
+            renderHistory();
+        }
+    }, error => {
+        console.error("Sync error:", error);
+        updateCloudUI('error');
+    });
+}
 
 
 
@@ -56,8 +134,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=31`).then(reg => {
-            console.log('SW Registered [v31]');
+        navigator.serviceWorker.register(`./sw.js?v=32`).then(reg => {
+            console.log('SW Registered [v32]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -982,9 +1060,19 @@ function saveCurrentProject() {
         completed: false
     };
 
+    if (isCloudActive && db) {
+        db.collection("arm_projects").doc(newProj.id.toString()).set(newProj)
+          .then(() => showToast('Salvat în Cloud!'))
+          .catch(() => saveLocalOnly(newProj, projects));
+    } else {
+        saveLocalOnly(newProj, projects);
+    }
+}
+
+function saveLocalOnly(newProj, projects) {
     projects.push(newProj);
     localStorage.setItem('arm_projects', JSON.stringify(projects));
-    showToast('Proiect salvat!');
+    showToast('Proiect salvat local!');
     renderHistory();
 }
 
@@ -1003,10 +1091,16 @@ function toggleItemComplete(projId, cat, idx, isCompleted, event) {
     if(event) event.stopPropagation();
     let projects = getProjectsFromStorage();
     const proj = projects.find(x => x.id === projId);
-    if (proj && proj.data && proj.data[cat] && proj.data[cat][idx]) {
-        proj.data[cat][idx].completed = isCompleted;
-        localStorage.setItem('arm_projects', JSON.stringify(projects));
-        renderHistory();
+    if (!proj || !proj.data || !proj.data[cat] || !proj.data[cat][idx]) return;
+    
+    proj.data[cat][idx].completed = isCompleted;
+    localStorage.setItem('arm_projects', JSON.stringify(projects));
+    renderHistory();
+
+    if (isCloudActive && db) {
+        db.collection("arm_projects").doc(projId.toString()).update({
+            [`data.${cat}`]: proj.data[cat]
+        }).catch(e => console.error("Cloud sync failed", e));
     }
 }
 
@@ -1093,6 +1187,9 @@ function toggleProjectComplete(id, isCompleted) {
         proj.completed = isCompleted;
         localStorage.setItem('arm_projects', JSON.stringify(projects));
         renderHistory();
+        if (isCloudActive && db) {
+            db.collection("arm_projects").doc(id.toString()).update({ completed: isCompleted }).catch(() => {});
+        }
     }
 }
 
@@ -1122,6 +1219,9 @@ function deleteProjectFromHistory(id) {
     let projects = getProjectsFromStorage();
     localStorage.setItem('arm_projects', JSON.stringify(projects.filter(x => x.id !== id)));
     renderHistory();
+    if (isCloudActive && db) {
+        db.collection("arm_projects").doc(id.toString()).delete().catch(() => {});
+    }
 }
 
 

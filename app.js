@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "9.7 (Professional Desktop Dashboard)";
+const APP_VERSION = "9.8 (Cloud Sync Fix)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -88,29 +88,43 @@ function initCloudSync() {
     if (!db) return;
     
     // 1. LISTEN for changes from Cloud
-    db.collection("arm_projects").orderBy("id", "desc").onSnapshot(snapshot => {
-        let cloudProjects = [];
+    db.collection("arm_projects").onSnapshot(snapshot => {
+        const cloudProjects = [];
         snapshot.forEach(doc => cloudProjects.push(doc.data()));
+        
         if (cloudProjects.length > 0) {
-            // Compare timestamps to avoid overwriting newer local data (simple ID check for now)
-            localStorage.setItem('arm_projects', JSON.stringify(cloudProjects));
+            const localProjects = getProjectsFromStorage();
+            const mergedMap = new Map();
+            
+            // Add local projects to map first
+            localProjects.forEach(p => mergedMap.set(p.id.toString(), p));
+            
+            // Overwrite/Add with cloud projects
+            cloudProjects.forEach(cp => {
+                const lp = mergedMap.get(cp.id.toString());
+                if (!lp || (cp.lastUpdated || 0) >= (lp.lastUpdated || 0)) {
+                    mergedMap.set(cp.id.toString(), cp);
+                }
+            });
+            
+            const finalProjects = Array.from(mergedMap.values()).sort((a, b) => b.id - a.id);
+            localStorage.setItem('arm_projects', JSON.stringify(finalProjects));
             renderHistory();
+            updateCloudUI('connected');
         }
     }, error => {
         console.error("Sync error:", error);
         updateCloudUI('error');
     });
 
-    // 2. MIGRATE Local data to Cloud (if missing)
-    const localProjects = getProjectsFromStorage();
-    if (localProjects.length > 0) {
+    // 2. MIGRATE Local data to Cloud (upload local-only projects)
+    setTimeout(() => {
+        const localProjects = getProjectsFromStorage();
         localProjects.forEach(proj => {
-            // Try to upload each project. Firestore will ignore if already exists with same ID
             db.collection("arm_projects").doc(proj.id.toString()).set(proj, { merge: true })
-              .then(() => console.log(`Project ${proj.id} migrated to cloud`))
-              .catch(e => console.warn("Migration skip or error:", e));
+              .catch(e => console.warn("Initial migration skip:", e));
         });
-    }
+    }, 2000);
 }
 
 
@@ -148,8 +162,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=35`).then(reg => {
-            console.log('SW Registered [v35]');
+        navigator.serviceWorker.register(`./sw.js?v=36`).then(reg => {
+            console.log('SW Registered [v36]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -1059,10 +1073,12 @@ function saveCurrentProject() {
         return; 
     }
     
-    let projects = getProjectsFromStorage();
+    const projects = getProjectsFromStorage();
+    const timestamp = Date.now();
 
     const newProj = {
-        id: Date.now(),
+        id: timestamp,
+        lastUpdated: timestamp,
         date: new Date().toLocaleString('ro-RO'),
         name: name,
         client: document.getElementById('projClient').value,
@@ -1075,7 +1091,9 @@ function saveCurrentProject() {
 
     if (isCloudActive && db) {
         db.collection("arm_projects").doc(newProj.id.toString()).set(newProj)
-          .then(() => showToast('Salvat în Cloud!'))
+          .then(() => {
+              showToast('Salvat în Cloud!');
+          })
           .catch(() => saveLocalOnly(newProj, projects));
     } else {
         saveLocalOnly(newProj, projects);
@@ -1112,7 +1130,8 @@ function toggleItemComplete(projId, cat, idx, isCompleted, event) {
 
     if (isCloudActive && db) {
         db.collection("arm_projects").doc(projId.toString()).update({
-            [`data.${cat}`]: proj.data[cat]
+            [`data.${cat}`]: proj.data[cat],
+            lastUpdated: Date.now()
         }).catch(e => console.error("Cloud sync failed", e));
     }
 }
@@ -1201,7 +1220,10 @@ function toggleProjectComplete(id, isCompleted) {
         localStorage.setItem('arm_projects', JSON.stringify(projects));
         renderHistory();
         if (isCloudActive && db) {
-            db.collection("arm_projects").doc(id.toString()).update({ completed: isCompleted }).catch(() => {});
+            db.collection("arm_projects").doc(id.toString()).update({ 
+                completed: isCompleted,
+                lastUpdated: Date.now()
+            }).catch(() => {});
         }
     }
 }

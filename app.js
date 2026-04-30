@@ -95,45 +95,51 @@ try {
 
 function initCloudSync() {
     if (!db) return;
+    console.log("Cloud Sync: Initializing...");
     
     // 1. LISTEN for changes from Cloud
     db.collection("arm_projects").onSnapshot(snapshot => {
         const cloudProjects = [];
         snapshot.forEach(doc => cloudProjects.push(doc.data()));
+        console.log(`Cloud Sync: Received ${cloudProjects.length} projects from cloud.`);
         
-        if (cloudProjects.length > 0) {
-            const localProjects = getProjectsFromStorage();
-            const mergedMap = new Map();
-            
-            // Add local projects to map first
-            localProjects.forEach(p => mergedMap.set(p.id.toString(), p));
-            
-            // Overwrite/Add with cloud projects
-            cloudProjects.forEach(cp => {
-                const lp = mergedMap.get(cp.id.toString());
-                if (!lp || (cp.lastUpdated || 0) >= (lp.lastUpdated || 0)) {
-                    mergedMap.set(cp.id.toString(), cp);
-                }
-            });
-            
-            const finalProjects = Array.from(mergedMap.values()).sort((a, b) => b.id - a.id);
-            localStorage.setItem('arm_projects', JSON.stringify(finalProjects));
-            renderHistory();
-            updateCloudUI('connected');
-        }
+        const localProjects = getProjectsFromStorage();
+        const mergedMap = new Map();
+        
+        // Add local projects to map first
+        localProjects.forEach(p => mergedMap.set(p.id.toString(), p));
+        
+        // Overwrite/Add with cloud projects
+        cloudProjects.forEach(cp => {
+            const lp = mergedMap.get(cp.id.toString());
+            // Merge logic: use cloud if local is missing or if cloud is newer
+            if (!lp || (cp.lastUpdated || 0) >= (lp.lastUpdated || 0)) {
+                mergedMap.set(cp.id.toString(), cp);
+            }
+        });
+        
+        const finalProjects = Array.from(mergedMap.values()).sort((a, b) => b.id - a.id);
+        console.log(`Cloud Sync: Merged total of ${finalProjects.length} projects.`);
+        
+        localStorage.setItem('arm_projects', JSON.stringify(finalProjects));
+        renderHistory();
+        updateCloudUI('connected');
     }, error => {
-        console.error("Sync error:", error);
+        console.error("Cloud Sync: Error:", error);
         updateCloudUI('error');
     });
 
     // 2. MIGRATE Local data to Cloud (upload local-only projects)
     setTimeout(() => {
         const localProjects = getProjectsFromStorage();
-        localProjects.forEach(proj => {
-            db.collection("arm_projects").doc(proj.id.toString()).set(proj, { merge: true })
-              .catch(e => console.warn("Initial migration skip:", e));
-        });
-    }, 2000);
+        if (localProjects.length > 0) {
+            console.log(`Cloud Sync: Migrating ${localProjects.length} local projects...`);
+            localProjects.forEach(proj => {
+                db.collection("arm_projects").doc(proj.id.toString()).set(proj, { merge: true })
+                  .catch(e => console.warn("Cloud Sync: Migration skip:", e));
+            });
+        }
+    }, 3000);
 }
 
 
@@ -239,31 +245,33 @@ function manualUpdateCheck() {
     }
 }
 
-async function emergencyReset() {
-    if (!confirm("Aceasta actiune va sterge tot cache-ul si va reseta aplicatia. Datele salvate vor ramane intacte. Continuati?")) return;
+function emergencyReset() {
+    if (!confirm("ATENȚIE! Această acțiune va șterge cache-ul browserului și va forța descărcarea versiunii noi de pe server. Datele tale salvate în Cloud sunt în siguranță.\n\nContinui?")) return;
     
-    try {
-        // 1. Unregister all service workers
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (let registration of registrations) {
-            await registration.unregister();
-        }
-        
-        // 2. Delete all caches
-        const cacheNames = await caches.keys();
-        for (let name of cacheNames) {
-            await caches.delete(name);
-        }
-        
-        // 3. Clear session storage (optional)
-        sessionStorage.clear();
-        
-        // 4. Hard reload
-        window.location.reload(true);
-    } catch (e) {
-        console.error("Reset failed", e);
-        window.location.reload(true);
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Unregister all service workers
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
+        });
     }
+
+    // Clear Cache Storage
+    if ('caches' in window) {
+        caches.keys().then(names => {
+            for (let name of names) caches.delete(name);
+        });
+    }
+
+    showToast("Resetare completă! Se reîncarcă...");
+    setTimeout(() => {
+        window.location.reload(true);
+    }, 1500);
 }
 
 function shareResults(method) {

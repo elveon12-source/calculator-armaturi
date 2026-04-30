@@ -1154,13 +1154,18 @@ function toggleItemComplete(projId, cat, idx, isCompleted, event) {
 }
 
 function renderHistory() {
-    const projects = getProjectsFromStorage();
-    const body = document.getElementById('historyTableBody');
-    if (!body) return;
-    if (projects.length === 0) {
-        body.innerHTML = '<tr><td colspan="6" style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">Nu există proiecte salvate.</td></tr>';
-        return;
-    }
+    try {
+        const projects = getProjectsFromStorage();
+        console.log(`renderHistory: Rendering ${projects.length} projects.`);
+        const body = document.getElementById('historyTableBody');
+        if (!body) {
+            console.error("renderHistory: Element 'historyTableBody' not found!");
+            return;
+        }
+        if (projects.length === 0) {
+            body.innerHTML = '<tr><td colspan="6" style="padding:20px; color:rgba(255,255,255,0.4); text-align:center;">Nu există proiecte salvate.</td></tr>';
+            return;
+        }
     body.innerHTML = projects.map(p => {
         const isComp = p.completed ? 'checked' : '';
         const rowStyle = p.completed ? 'opacity: 0.6; background-color: rgba(16, 185, 129, 0.05);' : '';
@@ -1232,6 +1237,9 @@ function renderHistory() {
         </tr>
         ${detailsHTML}`;
     }).reverse().join('');
+    } catch (err) {
+        console.error("renderHistory CRASH:", err);
+    }
 }
 
 function toggleProjectComplete(id, isCompleted) {

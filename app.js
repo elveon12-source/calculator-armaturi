@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "9.9 (Sync Diagnostic)";
+const APP_VERSION = "10.0 (Pro Sync)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -177,8 +177,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=37`).then(reg => {
-            console.log('SW Registered [v37]');
+        navigator.serviceWorker.register(`./sw.js?v=100`).then(reg => {
+            console.log('SW Registered [v100]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {
@@ -279,7 +279,7 @@ function shareResults(method) {
     const tp = document.getElementById('grandTotalPrice').textContent;
     const tr = document.getElementById('grandTotalRows').textContent;
     const url = window.location.href;
-    const text = `PROIECT NOU ARMATURI\n\nRezumat:\n\uD83D\uDCC8 Greutate: ${tg}\n\uD83D\uDCC8 Cost estimat: ${tp}\n\uD83D\uDCC8 Total pozitii: ${tr}\n\nAcceseaza proiectul aici:\n${url}`;
+    const text = `PROIECT ARMATURI PRO v10.0\n\nRezumat:\n📈 Greutate: ${tg}\n📈 Cost estimat: ${tp}\n📈 Total pozitii: ${tr}\n\nAcceseaza proiectul aici:\n${url}`;
 
     if (method === 'whatsapp') {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
@@ -1295,7 +1295,7 @@ function shareResults(method) {
     const tp = document.getElementById('grandTotalPrice').textContent;
     const tr = document.getElementById('grandTotalRows').textContent;
     const url = window.location.href;
-    const text = `PROIECT NOU ARM??TURI\n\nRezumat:\n???? Greutate: ${tg}\n???? Cost estimat: ${tp}\n???? Total pozi??ii: ${tr}\n\nAcceseaz?? proiectul aici:\n${url}`;
+    const text = `PROIECT NOU ARMATURI\n\nRezumat:\n📦 Greutate: ${tg}\n💰 Cost estimat: ${tp}\n🔢 Total poziții: ${tr}\n\nAccesează proiectul aici:\n${url}`;
 
     if (method === 'whatsapp') {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');

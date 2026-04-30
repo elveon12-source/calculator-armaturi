@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "9.8 (Cloud Sync Fix)";
+const APP_VERSION = "9.9 (Sync Diagnostic)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -47,6 +47,11 @@ function updateCloudUI(status) {
         el.classList.add('active');
         txt.textContent = 'Sincronizat';
         isCloudActive = true;
+    } else if (status === 'not-created') {
+        el.classList.add('error');
+        txt.textContent = 'Bază de date lipsă';
+        isCloudActive = false;
+        alert("Sincronizarea NU este activă!\n\nMotiv: Nu ai creat baza de date în consola Firebase.\n\nTe rog intră în consola Firebase -> Firestore Database și apasă pe butonul 'Create Database'!");
     } else if (status === 'error') {
         el.classList.add('error');
         txt.textContent = 'Eroare (Vezi Consola)';
@@ -76,8 +81,12 @@ try {
           })
           .catch(err => {
               clearTimeout(timeout);
-              console.warn("Firestore access denied. Did you create the database?", err);
-              updateCloudUI('error');
+              if (err.code === 'not-found' || err.message.includes('not exist')) {
+                  updateCloudUI('not-created');
+              } else {
+                  console.warn("Firestore access denied:", err);
+                  updateCloudUI('error');
+              }
           });
     }
 } catch(e) {
@@ -162,8 +171,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=36`).then(reg => {
-            console.log('SW Registered [v36]');
+        navigator.serviceWorker.register(`./sw.js?v=37`).then(reg => {
+            console.log('SW Registered [v37]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {

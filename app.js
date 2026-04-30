@@ -1181,7 +1181,9 @@ function renderHistory() {
                 <thead><tr style="background: rgba(255,255,255,0.05); color: #94a3b8;"><th style="width: 40px; text-align:center;">Gata</th><th>Cat.</th><th>Marcă</th><th>Detalii</th><th>Buc</th><th>Greutate</th></tr></thead>
                 <tbody>`;
             validCats.forEach(cat => {
+                if (!Array.isArray(p.data[cat])) return;
                 p.data[cat].forEach((item, idx) => {
+                    if (!item) return;
                     const checked = item.completed ? 'checked' : '';
                     const opac = item.completed ? 'opacity: 0.4; text-decoration: line-through;' : 'opacity: 1;';
                     
@@ -1208,12 +1210,15 @@ function renderHistory() {
         
         detailsHTML += `</div></td></tr>`;
 
+        const projDate = (p.date || '').split(',')[0] || '-';
+        const projWeight = typeof p.totalWeight === 'number' ? p.totalWeight.toFixed(2) : '0.00';
+
         return `
         <tr style="${rowStyle} cursor: pointer; transition: 0.2s;" onclick="toggleProjectDetails(${p.id})" title="Apasă pentru detalii">
-            <td style="${textStyle}"><span style="color: #64748b; margin-right: 5px; font-size: 10px;">${toggleIcon}</span> ${p.date.split(',')[0]}</td>
-            <td style="font-weight:bold; ${textStyle}">${p.name}</td>
+            <td style="${textStyle}"><span style="color: #64748b; margin-right: 5px; font-size: 10px;">${toggleIcon}</span> ${projDate}</td>
+            <td style="font-weight:bold; ${textStyle}">${p.name || 'Proiect Fără Nume'}</td>
             <td style="${textStyle}">${p.client || '-'}</td>
-            <td style="${textStyle}">${p.totalWeight.toFixed(2)} kg</td>
+            <td style="${textStyle}">${projWeight} kg</td>
             <td onclick="event.stopPropagation()">
                 <label style="display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer; color: #10b981; font-weight: 600; font-size: 13px;">
                     <input type="checkbox" ${isComp} onchange="toggleProjectComplete(${p.id}, this.checked)" style="transform: scale(1.3); accent-color: #10b981; cursor: pointer;">

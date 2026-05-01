@@ -642,8 +642,8 @@
                             <div class="form-group full-width"><label for="sarMarca">Marcaj (Marca)</label><input type="text" id="sarMarca" placeholder="Ex: S1, Legături..." oninput="calcSarma()"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label for="sarTip">Tip Sârmă</label><select id="sarTip" onchange="calcSarma()"><option value="Neagră" selected>Sârmă Neagră</option><option value="Zincală">Sârmă Zincată</option></select></div>
-                            <div class="form-group"><label for="sarDiam">Diametru (mm)</label><select id="sarDiam" onchange="calcSarma()"><option value="1.2">Ø1.2</option><option value="1.6" selected>Ø1.6</option><option value="2.0">Ø2.0</option><option value="2.5">Ø2.5</option></select></div>
+                            <div class="form-group"><label for="sarTip">Tip Sârmă</label><select id="sarTip" onchange="calcSarma()"><option value="moale_neagra" selected>Moale Neagră</option><option value="galvanizata">Galvanizată</option><option value="ghimpata">Ghimpată</option></select></div>
+                            <div class="form-group"><label for="sarDiam">Diametru (mm)</label><select id="sarDiam" onchange="calcSarma()"><option value="1.2">Ø1.2</option><option value="1.6" selected>Ø1.6</option><option value="2.0">Ø2.0</option><option value="3.0">Ø3.0</option><option value="4.0">Ø4.0</option><option value="5.0">Ø5.0</option></select></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group half-width"><label for="sarL">Lungime (m)</label><input type="number" id="sarL" value="100" min="1" step="1" oninput="calcSarma()"></div>
@@ -963,7 +963,7 @@
                 </div>
             </div>
             <div class="app-version-wrapper">
-                <span class="app-version" id="appVersion">v10.1</span>
+                <span class="app-version" id="appVersion">v10.2</span>
                 <span id="updateBadge" class="update-badge" onclick="window.location.reload()" style="display:none">Actualizează acum</span>
                 <div style="display: flex; gap: 5px;">
                     <button class="btn-emergency-reset" id="btnUpdateManual" onclick="manualUpdateCheck()" title="Verifică actualizări noi" style="background: var(--primary); color: white;">

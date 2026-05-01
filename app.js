@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "10.1 (Sync & Profile U Fix)";
+const APP_VERSION = "10.2 (Sarma Fix)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -193,8 +193,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=101`).then(reg => {
-            console.log('SW Registered [v101]');
+        navigator.serviceWorker.register(`./sw.js?v=102`).then(reg => {
+            console.log('SW Registered [v102]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {

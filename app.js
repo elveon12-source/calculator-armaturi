@@ -378,6 +378,9 @@ function initTabs() {
             if (panel) panel.classList.add('active');
             
             if (tabId === 'proiecte') renderHistory();
+            if (tabId === 'personalizat') {
+                window.dispatchEvent(new Event('resize'));
+            }
 
             if (indicator) {
                 indicator.style.width = `${btn.offsetWidth}px`;

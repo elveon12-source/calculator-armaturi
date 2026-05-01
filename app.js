@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "10.0 (Pro Sync)";
+const APP_VERSION = "10.1 (Sync & Profile U Fix)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -99,11 +99,27 @@ function initCloudSync() {
     
     // 1. LISTEN for changes from Cloud
     db.collection("arm_projects").onSnapshot(snapshot => {
+        // Process deletions first
+        let localProjects = getProjectsFromStorage();
+        let wasDeleted = false;
+        
+        snapshot.docChanges().forEach(change => {
+            if (change.type === 'removed') {
+                localProjects = localProjects.filter(p => p.id.toString() !== change.doc.id);
+                wasDeleted = true;
+            }
+        });
+        
+        if (wasDeleted) {
+            localStorage.setItem('arm_projects', JSON.stringify(localProjects));
+        }
+
         const cloudProjects = [];
         snapshot.forEach(doc => cloudProjects.push(doc.data()));
         console.log(`Cloud Sync: Received ${cloudProjects.length} projects from cloud.`);
         
-        const localProjects = getProjectsFromStorage();
+        // Reload local projects
+        localProjects = getProjectsFromStorage();
         const mergedMap = new Map();
         
         // Add local projects to map first
@@ -177,8 +193,8 @@ function initPWA() {
 
     if ('serviceWorker' in navigator) {
         // Register Service Worker with forced versioning
-        navigator.serviceWorker.register(`./sw.js?v=100`).then(reg => {
-            console.log('SW Registered [v100]');
+        navigator.serviceWorker.register(`./sw.js?v=101`).then(reg => {
+            console.log('SW Registered [v101]');
             
             // Check if there is already a waiting worker
             if (reg.waiting) {

@@ -479,19 +479,19 @@
                     <div class="card-header"><h3>Parametri Profil U</h3><span class="badge badge-green">Calculator</span></div>
                     <form class="calc-form" id="formProfileU" onsubmit="return false;">
                         <div class="form-row">
-                            <div class="form-group full-width"><label for="profUMarca">Marcaj (Marca)</label><input type="text" id="profUMarca" placeholder="Ex: U1, Centură..." oninput="calcProfileU()"></div>
+                            <div class="form-group full-width"><label for="profilUMarca">Marcaj (Marca)</label><input type="text" id="profilUMarca" placeholder="Ex: U1, Centură..." oninput="calcProfileU()"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label for="profUDiam">Diametru (mm)</label><select id="profUDiam" onchange="calcProfileU()"><option value="6">Ø6</option><option value="8">Ø8</option><option value="10" selected>Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
-                            <div class="form-group"><label for="profUClasa">Clasă Oțel</label><select id="profUClasa" onchange="calcProfileU()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                            <div class="form-group"><label for="profilUDiam">Diametru (mm)</label><select id="profilUDiam" onchange="calcProfileU()"><option value="6">Ø6</option><option value="8">Ø8</option><option value="10" selected>Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
+                            <div class="form-group"><label for="profilUClasa">Clasă Oțel</label><select id="profilUClasa" onchange="calcProfileU()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label for="profUA">Latura A (cm)</label><input type="number" id="profUA" value="20" min="1" step="0.5" oninput="calcProfileU()"></div>
-                            <div class="form-group"><label for="profUB">Latura B (cm)</label><input type="number" id="profUB" value="100" min="1" step="0.5" oninput="calcProfileU()"></div>
-                            <div class="form-group"><label for="profUC">Latura C (cm)</label><input type="number" id="profUC" value="20" min="1" step="0.5" oninput="calcProfileU()"></div>
+                            <div class="form-group"><label for="profilUA">Latura A (cm)</label><input type="number" id="profilUA" value="20" min="1" step="0.5" oninput="calcProfileU()"></div>
+                            <div class="form-group"><label for="profilUB">Latura B (cm)</label><input type="number" id="profilUB" value="100" min="1" step="0.5" oninput="calcProfileU()"></div>
+                            <div class="form-group"><label for="profilUC">Latura C (cm)</label><input type="number" id="profilUC" value="20" min="1" step="0.5" oninput="calcProfileU()"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group full-width"><label for="profUBuc">Nr. Bucăți</label><input type="number" id="profUBuc" value="20" min="1" step="1" oninput="calcProfileU()"></div>
+                            <div class="form-group full-width"><label for="profilUBuc">Nr. Bucăți</label><input type="number" id="profilUBuc" value="20" min="1" step="1" oninput="calcProfileU()"></div>
                         </div>
                     </form>
                     <div class="results-grid" id="resultsProfileU">
@@ -963,7 +963,7 @@
                 </div>
             </div>
             <div class="app-version-wrapper">
-                <span class="app-version" id="appVersion">v10.0</span>
+                <span class="app-version" id="appVersion">v10.1</span>
                 <span id="updateBadge" class="update-badge" onclick="window.location.reload()" style="display:none">Actualizează acum</span>
                 <div style="display: flex; gap: 5px;">
                     <button class="btn-emergency-reset" id="btnUpdateManual" onclick="manualUpdateCheck()" title="Verifică actualizări noi" style="background: var(--primary); color: white;">

@@ -379,7 +379,7 @@ function initTabs() {
             
             if (tabId === 'proiecte') renderHistory();
             if (tabId === 'personalizat') {
-                window.dispatchEvent(new Event('resize'));
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
             }
 
             if (indicator) {
@@ -1528,7 +1528,7 @@ function initSmartSketch() {
         const snapped = snapPoint(lastP, pos);
         const dist = Math.sqrt(Math.pow(snapped.x - lastP.x, 2) + Math.pow(snapped.y - lastP.y, 2));
         
-        if (dist > 15) { // minimum length to register
+        if (dist > 5) { // minimum length to register
             let lengthCm = Math.round(dist / 3); // 3 pixels per cm
             let relativeAngle = snapped.angle;
             
@@ -1547,6 +1547,9 @@ function initSmartSketch() {
             }
             renderPersSegments(); // This calculates and redraws correctly
         } else {
+            if (persSegments.length === 0) {
+                sketchPoints = []; // They just clicked, so don't trap the starting point!
+            }
             drawCustomShape(); // reset drawing tip
         }
     };

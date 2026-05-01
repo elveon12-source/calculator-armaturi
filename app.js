@@ -1399,32 +1399,42 @@ function drawCustomShape() {
     const ctx = canvas.getContext('2d');
     
     if (!isDrawing && persSegments.length > 0) {
-        // Recalculate mathematical points based on persSegments to keep it perfectly to scale
         let mathPts = [{x: 0, y: 0}];
         let currentGlobalAngle = 0;
         let cX = 0, cY = 0;
-        const SC = 3; // pixels per cm for scaling
         
         let minX = 0, maxX = 0, minY = 0, maxY = 0;
         
         persSegments.forEach(seg => {
             currentGlobalAngle += (seg.angle || 0);
             const rad = currentGlobalAngle * Math.PI / 180;
-            cX += (seg.L * SC) * Math.cos(rad);
-            cY += (seg.L * SC) * Math.sin(rad);
+            cX += (seg.L) * Math.cos(rad);
+            cY += (seg.L) * Math.sin(rad);
             mathPts.push({x: cX, y: cY});
             
             if(cX < minX) minX = cX; if(cX > maxX) maxX = cX;
             if(cY < minY) minY = cY; if(cY > maxY) maxY = cY;
         });
         
-        // Center the shape in canvas
-        const shapeW = maxX - minX;
-        const shapeH = maxY - minY;
-        const offsetX = (canvas.width - shapeW) / 2 - minX;
-        const offsetY = (canvas.height - shapeH) / 2 - minY;
+        const rawW = maxX - minX || 1;
+        const rawH = maxY - minY || 1;
         
-        sketchPoints = mathPts.map(p => ({ x: p.x + offsetX, y: p.y + offsetY }));
+        // Auto-Zoom: Fit shape into 75% of the canvas
+        const targetW = canvas.width * 0.75;
+        const targetH = canvas.height * 0.75;
+        
+        const scaleX = targetW / rawW;
+        const scaleY = targetH / rawH;
+        let SC = Math.min(scaleX, scaleY);
+        if (SC > 10) SC = 10; // prevent extremely huge lines for small segments
+        
+        const scaledW = rawW * SC;
+        const scaledH = rawH * SC;
+        
+        const offsetX = (canvas.width - scaledW) / 2 - (minX * SC);
+        const offsetY = (canvas.height - scaledH) / 2 - (minY * SC);
+        
+        sketchPoints = mathPts.map(p => ({ x: (p.x * SC) + offsetX, y: (p.y * SC) + offsetY }));
     }
     
     drawSketch(ctx, canvas);

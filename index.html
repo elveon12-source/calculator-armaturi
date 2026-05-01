@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=36">
+    <link rel="stylesheet" href="style.css?v=41">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
@@ -72,6 +72,14 @@
                 </span>
                 <span class="tab-label">Etrieri</span>
             </button>
+            <button class="tab-btn" data-tab="personalizat" id="tabPersonalizat">
+                <span class="tab-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                    </svg>
+                </span>
+                <span class="tab-label">Desen Liber</span>
+            </button>
             <button class="tab-btn" data-tab="agrafe" id="tabAgrafe">
                 <span class="tab-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -123,6 +131,7 @@
                 </span>
                 <span class="tab-label">Tablă</span>
             </button>
+
             <button class="tab-btn" data-tab="proiecte" id="tabProiecte">
                 <span class="tab-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -815,6 +824,91 @@
                         <tfoot><tr class="total-row"><td colspan="7">TOTAL</td><td id="totalCorGreut">-</td><td id="totalCorPret">-</td><td></td></tr></tfoot>
                     </table>
                 </div>
+            </div>
+        </section>
+
+        <!-- ==================== PERSONALIZAT TAB ==================== -->
+        <section class="tab-panel" id="panel-personalizat">
+            <div class="panel-grid">
+                <div class="diagram-card">
+                    <div class="card-header" style="justify-content: space-between;">
+                        <h3>Schiță Smart Sketch</h3>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button class="btn-share" onclick="resetSmartSketch()" style="padding: 4px 8px; font-size: 11px; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4);">🗑️ Șterge</button>
+                            <span class="badge badge-cyan">Touch/Mouse</span>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="diagramPersonalizat" style="position: relative; background: #0b0f19; min-height: 400px;">
+                        <!-- Grid Background -->
+                        <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; z-index: 1;"></div>
+                        <!-- Drawing Canvas -->
+                        <canvas id="drawCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; touch-action: none; cursor: crosshair; outline: none;"></canvas>
+                    </div>
+                </div>
+                <div class="calc-card">
+                    <div class="card-header"><h3>Constructor Laturi</h3><span class="badge badge-green">Calculator</span></div>
+                    <form class="calc-form" id="formPersonalizat" onsubmit="return false;">
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="persMarca">Marcaj (Marca)</label><input type="text" id="persMarca" placeholder="Ex: P1, Special..." oninput="calcPersonalizat()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="persDiam">Diametru (mm)</label><select id="persDiam" onchange="calcPersonalizat()"><option value="6">Ø6</option><option value="8" selected>Ø8</option><option value="10">Ø10</option><option value="12">Ø12</option><option value="14">Ø14</option><option value="16">Ø16</option></select></div>
+                            <div class="form-group"><label for="persClasa">Clasă Oțel</label><select id="persClasa" onchange="calcPersonalizat()"><option value="BST500S" selected>BST500S</option><option value="PC52">PC52</option><option value="OB37">OB37</option><option value="S500">S500</option></select></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width"><label for="persBuc">Nr. Bucăți</label><input type="number" id="persBuc" value="10" min="1" step="1" oninput="calcPersonalizat()"></div>
+                        </div>
+                        
+                        <div class="segment-builder">
+                            <h4>Laturi & Unghiuri (cm / grade)</h4>
+                            <div id="segmentList" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+                                <!-- Segments will be injected here -->
+                            </div>
+                            <div style="display:flex; gap:10px; margin-top:15px;">
+                                <button class="btn-add" onclick="addPersSegment()" style="flex:1;">+ Adaugă Latură</button>
+                                <button class="btn-share" onclick="removePersSegment()" style="flex:1; background: #ef4444; color:white;">- Șterge Ultima</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="results-grid" id="resultsPersonalizat">
+                        <div class="result-card">
+                            <span class="result-label">L/buc</span>
+                            <span class="result-value" id="persLungBuc">0.00</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">L.tot</span>
+                            <span class="result-value" id="persLungTot">0.00</span>
+                            <span class="result-unit">m</span>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">G/m</span>
+                            <span class="result-value" id="persGSp">0.395</span>
+                            <span class="result-unit">kg/m</span>
+                        </div>
+                        <div class="result-card highlight">
+                            <span class="result-label">Masa T.</span>
+                            <span class="result-value" id="persGTot">0.00</span>
+                            <span class="result-unit">kg</span>
+                        </div>
+                        <div class="result-card price-card">
+                            <span class="result-label">Cost Tot</span>
+                            <span class="result-value" id="persPret">0.00</span>
+                            <span class="result-unit">lei</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="card-header"><h3>Tabel Piese Personalizate</h3><button class="btn-add" onclick="addRow('personalizat')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă rând</button></div>
+                <div class="table-wrapper">
+                    <table id="tablePersonalizat">
+                        <thead><tr><th>Nr.</th><th>Marcă</th><th>Ø</th><th>Clasă</th><th>Segmente</th><th>L/buc</th><th>Buc</th><th>L tot</th><th>G sp</th><th>G tot</th><th>Preț</th><th></th></tr></thead>
+                        <tbody id="tbodyPersonalizat"></tbody>
+                        <tfoot><tr class="total-row"><td colspan="7">TOTAL</td><td id="totalPersLung">-</td><td></td><td id="totalPersGreut">-</td><td id="totalPersPret">-</td><td></td></tr></tfoot>
+                    </table>
+                </div>
+                <div id="diamSummaryPersonalizat" class="diam-summary"></div>
             </div>
         </section>
 

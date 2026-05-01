@@ -4,19 +4,19 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "10.2 (Sarma Fix)";
+const APP_VERSION = "10.3 (Smart Sketch)";
 
 // ========================
 // GLOBAL DATA STORES
 // ========================
 const tableData = {
     etrieri: [], agrafe: [], arcade: [], profileU: [],
-    bare: [], sarma: [], tabla: [], cornier: []
+    bare: [], sarma: [], tabla: [], cornier: [], personalizat: []
 };
 
 let rowCounters = {
     etrieri: 0, agrafe: 0, arcade: 0, profileU: 0,
-    bare: 0, sarma: 0, tabla: 0, cornier: 0
+    bare: 0, sarma: 0, tabla: 0, cornier: 0, personalizat: 0
 };
 
 let deferredPrompt;
@@ -570,6 +570,10 @@ function calcRowValues(type, row) {
             else { row.gMp = weightsTablaCutata[row.model]||0; row.mpTot = row.mpTotal; }
             row.gTot = row.gMp*row.mpTot; break;
         case 'cornier': row.gSp = weightsCornier[row.dim]||0; row.gTot = row.L*row.buc*row.gSp; break;
+        case 'personalizat': 
+            row.lungBuc = (row.segments || []).reduce((s, seg) => s + (parseFloat(seg.L)||0), 0) / 100;
+            row.gSp = greutateSpecifica(row.diam);
+            break;
     }
     if(!['sarma','tabla','cornier'].includes(type)){ row.lungTot = row.lungBuc*row.buc; row.gTot = row.lungTot*row.gSp; }
     row.gTot = Math.round(row.gTot*100)/100; row.pret = Math.round(row.gTot*pretKg*100)/100;
@@ -649,6 +653,13 @@ function addRow(type) {
                 L: getNum('corL')||6, 
                 buc: parseInt(getVal('corBuc'))||1 
             }; break;
+        case 'personalizat':
+            row = { id: nr, marca: finalMarca,
+                diam: parseInt(getVal('persDiam'))||8,
+                clasa: getVal('persClasa')||'BST500S',
+                segments: JSON.parse(JSON.stringify(persSegments || [])),
+                buc: parseInt(getVal('persBuc'))||10
+            }; break;
     }
     calcRowValues(type, row); tableData[type].push(row);
     renderTable(type); updateTableTotals(type); updateGrandTotal(); saveToLocalStorage();
@@ -662,7 +673,7 @@ function updateTableRow(type, id, field, value) {
     
     const p = `${type}_${id}`;
     const setEl = (sfx, val) => { const e = document.getElementById(`${p}_${sfx}`); if (e) e.textContent = val; };
-    if (['etrieri','agrafe','profileU','bare','arcade'].includes(type)) {
+    if (['etrieri','agrafe','profileU','bare','arcade', 'personalizat'].includes(type)) {
         setEl('lungBuc', row.lungBuc.toFixed(2)); setEl('lungTot', row.lungTot.toFixed(2));
         setEl('gSp', row.gSp.toFixed(3));
     } else if (type==='sarma') { setEl('lungTot', (row.L*row.buc).toFixed(2)); setEl('gSp', row.gSp.toFixed(3)); }
@@ -707,6 +718,13 @@ function renderTable(type) {
             html += `<td colspan="2"><select onchange="updateTableRow('${type}', ${row.id}, 'dim', this.value)">${cornierDimOptions(row.dim)}</select></td>`;
             html += `<td>${inp('L', row.L, 1)}</td><td>${inp('buc', row.buc, 1)}</td>`;
             html += `<td>${comp('lungTot', (row.L*row.buc).toFixed(2))} m</td><td>${comp('gSp', row.gSp.toFixed(3))}</td>`;
+        } else if (type === 'personalizat') {
+            html += `<td><select onchange="updateTableRow('${type}', ${row.id}, 'diam', this.value)">${diameterOptions(row.diam)}</select></td>`;
+            html += `<td><select onchange="updateTableRow('${type}', ${row.id}, 'clasa', this.value)">${clasaOptions(row.clasa)}</select></td>`;
+            const segStr = (row.segments || []).map(s => `${s.L}cm(${s.angle}&deg;)`).join(', ');
+            html += `<td style="font-size: 11px;">${segStr}</td>`;
+            html += `<td>${comp('lungBuc', row.lungBuc.toFixed(2))}</td><td>${inp('buc', row.buc, 1)}</td>`;
+            html += `<td>${comp('lungTot', row.lungTot.toFixed(2))} m</td><td>${comp('gSp', row.gSp.toFixed(3))}</td>`;
         } else {
             if (type === 'arcade') {
                 html += `<td>${inp('diamExt', row.diamExt||33.7, 0.1)}</td>`;
@@ -805,6 +823,7 @@ async function exportAllToExcel() {
                 else if (t === 'sarma') headers = ['Nr', 'Marca', 'Tip', 'Diam', 'Lung (m)', 'Buc', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'tabla') headers = ['Nr', 'Marca', 'Mod', 'Spec/Model', 'Dim/Mp', 'Buc', 'Mp Tot (mp)', 'G Tot (kg)', 'Pret (lei)'];
                 else if (t === 'cornier') headers = ['Nr', 'Marca', 'Dim', 'Lung (m)', 'Buc', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
+                else if (t === 'personalizat') headers = ['Nr', 'Marca', 'Diam', 'Clasa', 'Segmente', 'Buc', 'Lung/Buc (m)', 'Lung Tot (m)', 'G Spec (kg/m)', 'G Tot (kg)', 'Pret (lei)'];
 
                 const headerRow = ws.addRow(headers);
                 headerRow.eachCell((cell) => {
@@ -824,6 +843,10 @@ async function exportAllToExcel() {
                     else if (t === 'sarma') rowVals = [idx+1, r.marca, r.tip, r.diam, r.L, r.buc, (r.L*r.buc), r.gSp, r.gTot, r.pret];
                     else if (t === 'tabla') rowVals = [idx+1, r.marca, r.mod, r.mod==='dreapta'?r.gros:r.model, r.mod==='dreapta'?`${r.lat}x${r.lung}`:r.mpTotal, r.buc, r.mpTot, r.gTot, r.pret];
                     else if (t === 'cornier') rowVals = [idx+1, r.marca, r.dim, r.L, r.buc, (r.L*r.buc), r.gSp, r.gTot, r.pret];
+                    else if (t === 'personalizat') {
+                        const segStr = (r.segments || []).map(s => `${s.L}cm(${s.angle}°)`).join(', ');
+                        rowVals = [idx+1, r.marca, r.diam, r.clasa, segStr, r.buc, r.lungBuc, r.lungTot, r.gSp, r.gTot, r.pret];
+                    }
                     
                     const addedRow = ws.addRow(rowVals);
                     addedRow.eachCell((cell) => {
@@ -1306,19 +1329,247 @@ function deleteProjectFromHistory(id) {
 }
 
 
-function shareResults(method) {
-    const tg = document.getElementById('grandTotalWeight').textContent;
-    const tp = document.getElementById('grandTotalPrice').textContent;
-    const tr = document.getElementById('grandTotalRows').textContent;
-    const url = window.location.href;
-    const text = `PROIECT NOU ARMATURI\n\nRezumat:\n📦 Greutate: ${tg}\n💰 Cost estimat: ${tp}\n🔢 Total poziții: ${tr}\n\nAccesează proiectul aici:\n${url}`;
+// ========================
+// PERSONALIZAT LOGIC
+// ========================
+let persSegments = [{ L: 50, angle: 0 }, { L: 30, angle: 90 }];
 
-    if (method === 'whatsapp') {
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    } else {
-        navigator.clipboard.writeText(url).then(() => {
-            showToast("Link copiat A?n clipboard!");
-        });
+function renderPersSegments() {
+    const list = document.getElementById('segmentList');
+    if(!list) return;
+    let html = '';
+    persSegments.forEach((seg, idx) => {
+        html += `
+        <div class="segment-row">
+            <div class="form-group"><label>Latura ${idx+1} (cm)</label><input type="number" value="${seg.L}" oninput="updatePersSeg(${idx}, 'L', this.value)" min="0.1" step="0.1"></div>
+            <div class="form-group"><label>Unghi (&deg;)</label><input type="number" value="${seg.angle}" oninput="updatePersSeg(${idx}, 'angle', this.value)" step="1"></div>
+        </div>`;
+    });
+    list.innerHTML = html;
+    calcPersonalizat();
+}
+
+function updatePersSeg(idx, field, val) {
+    persSegments[idx][field] = parseFloat(val) || 0;
+    calcPersonalizat();
+}
+
+function addPersSegment() {
+    persSegments.push({ L: 20, angle: 90 });
+    renderPersSegments();
+}
+
+function removePersSegment() {
+    if(persSegments.length > 1) {
+        persSegments.pop();
+        renderPersSegments();
     }
 }
 
+function calcPersonalizat() {
+    let totalL = persSegments.reduce((s, seg) => s + (seg.L || 0), 0) / 100;
+    const diamSelect = document.getElementById('persDiam');
+    const bucInput = document.getElementById('persBuc');
+    if(!diamSelect || !bucInput) return;
+    
+    const diam = parseInt(diamSelect.value) || 8;
+    const buc = parseInt(bucInput.value) || 1;
+    const pretKg = getPretKg();
+    const gSp = greutateSpecifica(diam);
+    
+    document.getElementById('persLungBuc').textContent = totalL.toFixed(2);
+    document.getElementById('persLungTot').textContent = (totalL * buc).toFixed(2);
+    document.getElementById('persGSp').textContent = gSp.toFixed(3);
+    const gTot = totalL * buc * gSp;
+    document.getElementById('persGTot').textContent = gTot.toFixed(2);
+    document.getElementById('persPret').textContent = (gTot * pretKg).toFixed(2);
+    
+    drawCustomShape();
+}
+
+let sketchPoints = [];
+let isDrawing = false;
+
+function drawCustomShape() {
+    const canvas = document.getElementById('drawCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    if (!isDrawing && persSegments.length > 0) {
+        // Recalculate mathematical points based on persSegments to keep it perfectly to scale
+        let mathPts = [{x: 0, y: 0}];
+        let currentGlobalAngle = 0;
+        let cX = 0, cY = 0;
+        const SC = 3; // pixels per cm for scaling
+        
+        let minX = 0, maxX = 0, minY = 0, maxY = 0;
+        
+        persSegments.forEach(seg => {
+            currentGlobalAngle += (seg.angle || 0);
+            const rad = currentGlobalAngle * Math.PI / 180;
+            cX += (seg.L * SC) * Math.cos(rad);
+            cY += (seg.L * SC) * Math.sin(rad);
+            mathPts.push({x: cX, y: cY});
+            
+            if(cX < minX) minX = cX; if(cX > maxX) maxX = cX;
+            if(cY < minY) minY = cY; if(cY > maxY) maxY = cY;
+        });
+        
+        // Center the shape in canvas
+        const shapeW = maxX - minX;
+        const shapeH = maxY - minY;
+        const offsetX = (canvas.width - shapeW) / 2 - minX;
+        const offsetY = (canvas.height - shapeH) / 2 - minY;
+        
+        sketchPoints = mathPts.map(p => ({ x: p.x + offsetX, y: p.y + offsetY }));
+    }
+    
+    drawSketch(ctx, canvas);
+}
+
+function drawSketch(ctx, canvas, currentSnap = null) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (sketchPoints.length === 0) return;
+
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(sketchPoints[0].x, sketchPoints[0].y);
+    for (let i = 1; i < sketchPoints.length; i++) {
+        ctx.lineTo(sketchPoints[i].x, sketchPoints[i].y);
+    }
+    
+    if (isDrawing && currentSnap) {
+        ctx.lineTo(currentSnap.x, currentSnap.y);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    sketchPoints.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    
+    if (isDrawing && currentSnap) {
+        ctx.fillStyle = '#f87171'; 
+        ctx.beginPath();
+        ctx.arc(currentSnap.x, currentSnap.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function initSmartSketch() {
+    const canvas = document.getElementById('drawCanvas');
+    if (!canvas) return;
+    
+    const resizeCanvas = () => {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        drawCustomShape();
+    };
+    window.addEventListener('resize', resizeCanvas);
+    setTimeout(resizeCanvas, 100);
+    
+    const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const snapPoint = (lastP, newP) => {
+        const dx = newP.x - lastP.x;
+        const dy = newP.y - lastP.y;
+        let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        angle = Math.round(angle / 45) * 45; // snap to 45 deg increments
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const rad = angle * Math.PI / 180;
+        return { x: lastP.x + dist * Math.cos(rad), y: lastP.y + dist * Math.sin(rad), angle: angle };
+    };
+
+    const startDraw = (e) => {
+        e.preventDefault();
+        isDrawing = true;
+        const pos = getPos(e);
+        if (sketchPoints.length === 0) sketchPoints.push(pos);
+    };
+
+    const doDraw = (e) => {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        const lastP = sketchPoints[sketchPoints.length - 1];
+        const snapped = snapPoint(lastP, pos);
+        drawSketch(canvas.getContext('2d'), canvas, snapped);
+    };
+
+    const endDraw = (e) => {
+        if (!isDrawing) return;
+        isDrawing = false;
+        e.preventDefault();
+        
+        let pos;
+        if (e.type === 'touchend') {
+            const rect = canvas.getBoundingClientRect();
+            pos = { x: e.changedTouches[0].clientX - rect.left, y: e.changedTouches[0].clientY - rect.top };
+        } else {
+            pos = getPos(e);
+        }
+        
+        const lastP = sketchPoints[sketchPoints.length - 1];
+        const snapped = snapPoint(lastP, pos);
+        const dist = Math.sqrt(Math.pow(snapped.x - lastP.x, 2) + Math.pow(snapped.y - lastP.y, 2));
+        
+        if (dist > 15) { // minimum length to register
+            let lengthCm = Math.round(dist / 3); // 3 pixels per cm
+            let relativeAngle = snapped.angle;
+            
+            if (persSegments.length > 0) {
+                 let prevGlobal = 0;
+                 persSegments.forEach(s => prevGlobal += s.angle);
+                 relativeAngle = snapped.angle - prevGlobal;
+                 while(relativeAngle > 180) relativeAngle -= 360;
+                 while(relativeAngle <= -180) relativeAngle += 360;
+            }
+            
+            if (persSegments.length === 0) {
+                 persSegments = [{ L: lengthCm, angle: snapped.angle }];
+            } else {
+                 persSegments.push({ L: lengthCm, angle: relativeAngle });
+            }
+            renderPersSegments(); // This calculates and redraws correctly
+        } else {
+            drawCustomShape(); // reset drawing tip
+        }
+    };
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', doDraw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('mouseleave', () => { if(isDrawing) { isDrawing = false; drawCustomShape(); }});
+    
+    canvas.addEventListener('touchstart', startDraw, {passive: false});
+    canvas.addEventListener('touchmove', doDraw, {passive: false});
+    canvas.addEventListener('touchend', endDraw, {passive: false});
+}
+
+function resetSmartSketch() {
+    sketchPoints = [];
+    persSegments = [];
+    renderPersSegments();
+    drawCustomShape();
+}
+
+// Call initially once DOM is ready
+setTimeout(() => {
+    if(document.getElementById('segmentList')) {
+        persSegments = []; // Start empty so user can draw
+        renderPersSegments();
+        initSmartSketch();
+    }
+}, 500);

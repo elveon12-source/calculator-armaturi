@@ -1490,12 +1490,11 @@ function initSmartSketch() {
     
     const getPos = (e) => {
         const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: clientX - rect.left, y: clientY - rect.top };
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
 
     const snapPoint = (lastP, newP) => {
+        if (!lastP) return newP;
         const dx = newP.x - lastP.x;
         const dy = newP.y - lastP.y;
         let angle = Math.atan2(dy, dx) * 180 / Math.PI;
@@ -1508,6 +1507,7 @@ function initSmartSketch() {
     const startDraw = (e) => {
         e.preventDefault();
         isDrawing = true;
+        try { canvas.setPointerCapture(e.pointerId); } catch(err) {}
         const pos = getPos(e);
         if (sketchPoints.length === 0) sketchPoints.push(pos);
     };
@@ -1525,15 +1525,9 @@ function initSmartSketch() {
         if (!isDrawing) return;
         isDrawing = false;
         e.preventDefault();
+        try { canvas.releasePointerCapture(e.pointerId); } catch(err) {}
         
-        let pos;
-        if (e.type === 'touchend') {
-            const rect = canvas.getBoundingClientRect();
-            pos = { x: e.changedTouches[0].clientX - rect.left, y: e.changedTouches[0].clientY - rect.top };
-        } else {
-            pos = getPos(e);
-        }
-        
+        const pos = getPos(e);
         const lastP = sketchPoints[sketchPoints.length - 1];
         const snapped = snapPoint(lastP, pos);
         const dist = Math.sqrt(Math.pow(snapped.x - lastP.x, 2) + Math.pow(snapped.y - lastP.y, 2));
@@ -1558,20 +1552,16 @@ function initSmartSketch() {
             renderPersSegments(); // This calculates and redraws correctly
         } else {
             if (persSegments.length === 0) {
-                sketchPoints = []; // They just clicked, so don't trap the starting point!
+                sketchPoints = []; // reset if just tapped
             }
             drawCustomShape(); // reset drawing tip
         }
     };
 
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', doDraw);
-    canvas.addEventListener('mouseup', endDraw);
-    canvas.addEventListener('mouseleave', () => { if(isDrawing) { isDrawing = false; drawCustomShape(); }});
-    
-    canvas.addEventListener('touchstart', startDraw, {passive: false});
-    canvas.addEventListener('touchmove', doDraw, {passive: false});
-    canvas.addEventListener('touchend', endDraw, {passive: false});
+    canvas.addEventListener('pointerdown', startDraw);
+    canvas.addEventListener('pointermove', doDraw);
+    canvas.addEventListener('pointerup', endDraw);
+    canvas.addEventListener('pointercancel', (e) => { if(isDrawing) { isDrawing = false; try { canvas.releasePointerCapture(e.pointerId); } catch(err) {} drawCustomShape(); }});
 }
 
 function resetSmartSketch() {

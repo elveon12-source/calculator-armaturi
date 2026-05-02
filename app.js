@@ -1011,7 +1011,10 @@ function printProjectToPDF(id) {
     }
     
     const origData = JSON.parse(JSON.stringify(tableData));
-    tableData = p.data || {};
+    
+    // Clear and fill tableData without reassigning
+    Object.keys(tableData).forEach(k => delete tableData[k]);
+    Object.keys(p.data || {}).forEach(k => { tableData[k] = p.data[k]; });
     
     const origClient = document.getElementById('projClient').value;
     const origAdresa = document.getElementById('projAdresa').value;
@@ -1023,7 +1026,10 @@ function printProjectToPDF(id) {
     
     printToPDF();
     
-    tableData = origData;
+    // Restore origData
+    Object.keys(tableData).forEach(k => delete tableData[k]);
+    Object.keys(origData).forEach(k => { tableData[k] = origData[k]; });
+    
     document.getElementById('projClient').value = origClient;
     document.getElementById('projAdresa').value = origAdresa;
     document.getElementById('projName').value = origName;

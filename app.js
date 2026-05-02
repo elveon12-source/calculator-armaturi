@@ -950,7 +950,7 @@ function printToPDF() {
                 content += `<div class="section-title">${type.toUpperCase()} | DIAMETRU ${diam} MM</div>`;
                 content += `<table>
                     <thead>
-                        <tr><th>Nr</th><th>Marca</th><th style="width:80px;">Diam</th><th>Dimensiuni Detaliate</th><th style="width:60px;">Buc</th><th>Greutate (kg)</th></tr>
+                        <tr><th>Nr</th><th>Marca</th><th style="width:80px;">Diam</th><th>Schiță</th><th>Dimensiuni Detaliate</th><th style="width:60px;">Buc</th><th>Greutate (kg)</th></tr>
                     </thead>
                     <tbody>`;
                 
@@ -964,10 +964,63 @@ function printToPDF() {
                     else if (type === 'bare') detalii = `Bara dreapta L=${r.L} cm`;
                     else detalii = r.tip || r.model || r.dim || "-";
 
+                    let schita = "";
+                    if (type === 'etrieri') {
+                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><rect x="5" y="5" width="40" height="25" fill="none" stroke="#1e40af" stroke-width="2" rx="2"/></svg>`;
+                    } else if (type === 'agrafe') {
+                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="M 5,25 L 5,10 L 45,10 L 45,25" fill="none" stroke="#1e40af" stroke-width="2"/></svg>`;
+                    } else if (type === 'profileU') {
+                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="M 5,10 L 5,30 L 45,30 L 45,10" fill="none" stroke="#1e40af" stroke-width="2"/></svg>`;
+                    } else if (type === 'arcade') {
+                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="M 5,28 A 20,20 0 0,1 45,28" fill="none" stroke="#1e40af" stroke-width="2"/></svg>`;
+                    } else if (type === 'bare') {
+                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><line x1="5" y1="18" x2="45" y2="18" stroke="#1e40af" stroke-width="2"/></svg>`;
+                    } else if (type === 'personalizat') {
+                        let segs = r.segments || [];
+                        if (segs.length === 0 && r.segmentsStr) {
+                            try {
+                                segs = r.segmentsStr.split(',').map(s => {
+                                    let parts = s.trim().match(/([\d.]+)\s*cm\s*\(([-\d.]+)\s*°\)/);
+                                    if (parts) return { L: parseFloat(parts[1]), angle: parseFloat(parts[2]) };
+                                    return null;
+                                }).filter(Boolean);
+                            } catch(e) {}
+                        }
+                        if (segs.length > 0) {
+                            let pts = [{x: 0, y: 0}];
+                            let curX = 0, curY = 0;
+                            let globA = 0;
+                            segs.forEach(s => {
+                                globA += (s.angle || 0);
+                                const rad = globA * Math.PI / 180;
+                                curX += (s.L || 0) * Math.cos(rad);
+                                curY += (s.L || 0) * Math.sin(rad);
+                                pts.push({x: curX, y: curY});
+                            });
+                            let minX = Math.min(...pts.map(p => p.x)), maxX = Math.max(...pts.map(p => p.x));
+                            let minY = Math.min(...pts.map(p => p.y)), maxY = Math.max(...pts.map(p => p.y));
+                            let rw = maxX - minX || 1;
+                            let rh = maxY - minY || 1;
+                            let sc = Math.min(40 / rw, 25 / rh);
+                            if (sc > 4) sc = 4;
+                            let finalPts = pts.map(p => ({
+                                x: 5 + (p.x - minX) * sc,
+                                y: 5 + (p.y - minY) * sc
+                            }));
+                            let dStr = `M ${finalPts[0].x},${finalPts[0].y} ` + finalPts.slice(1).map(p => `L ${p.x},${p.y}`).join(' ');
+                            schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="${dStr}" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round"/></svg>`;
+                        } else {
+                            schita = `-`;
+                        }
+                    } else {
+                        schita = `-`;
+                    }
+
                     content += `<tr>
                         <td>${idx + 1}</td>
                         <td style="font-weight:bold;">${r.marca}</td>
                         <td>${diam} mm</td>
+                        <td style="text-align:center;">${schita}</td>
                         <td style="text-align:left; padding-left:10px;">${detalii}</td>
                         <td>${r.buc}</td>
                         <td style="font-weight:600;">${r.gTot.toFixed(2)}</td>
@@ -976,7 +1029,7 @@ function printToPDF() {
                 });
                 
                 content += `<tr class="group-total-row">
-                    <td colspan="5" style="text-align:right; text-transform:uppercase;">Subtotal Grosime ${diam} mm:</td>
+                    <td colspan="6" style="text-align:right; text-transform:uppercase;">Subtotal Grosime ${diam} mm:</td>
                     <td>${subtotal.toFixed(2)} kg</td>
                 </tr>`;
                 content += `</tbody></table>`;

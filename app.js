@@ -1002,9 +1002,13 @@ function printToPDF() {
 }
 
 function printProjectToPDF(id) {
+    console.log("Attempting to print project with ID:", id);
     const projects = getProjectsFromStorage();
-    const p = projects.find(x => x.id === id);
-    if (!p) { showToast('Proiectul nu a fost găsit!'); return; }
+    const p = projects.find(x => x.id && x.id.toString() === id.toString());
+    if (!p) { 
+        alert('Proiectul nu a fost găsit în baza de date locală!'); 
+        return; 
+    }
     
     const origData = JSON.parse(JSON.stringify(tableData));
     tableData = p.data || {};
@@ -1297,9 +1301,9 @@ function renderHistory() {
                 </label>
             </td>
             <td style="display:flex; gap:5px; justify-content:center;" onclick="event.stopPropagation()">
-                <button class="btn-add" style="padding: 4px 8px; opacity: ${p.completed ? '0.5' : '1'};" onclick="loadProjectFromHistory(${p.id})" title="Încarcă">📂</button>
-                <button class="btn-add" style="padding: 4px 8px; background:#3b82f6;" onclick="printProjectToPDF(${p.id})" title="Tipărește PDF">🖨️</button>
-                <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory(${p.id})" title="Șterge">🗑️</button>
+                <button class="btn-add" style="padding: 4px 8px; opacity: ${p.completed ? '0.5' : '1'};" onclick="loadProjectFromHistory('${p.id}')" title="Încarcă">📂</button>
+                <button class="btn-add" style="padding: 4px 8px; background:#3b82f6;" onclick="printProjectToPDF('${p.id}')" title="Tipărește PDF">🖨️</button>
+                <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory('${p.id}')" title="Șterge">🗑️</button>
             </td>
         </tr>
         ${detailsHTML}`;

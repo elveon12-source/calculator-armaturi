@@ -1001,6 +1001,30 @@ function printToPDF() {
     document.head.removeChild(style);
 }
 
+function printProjectToPDF(id) {
+    const projects = getProjectsFromStorage();
+    const p = projects.find(x => x.id === id);
+    if (!p) { showToast('Proiectul nu a fost găsit!'); return; }
+    
+    const origData = JSON.parse(JSON.stringify(tableData));
+    tableData = p.data || {};
+    
+    const origClient = document.getElementById('projClient').value;
+    const origAdresa = document.getElementById('projAdresa').value;
+    const origName = document.getElementById('projName').value;
+    
+    document.getElementById('projClient').value = p.client || '';
+    document.getElementById('projAdresa').value = p.adresa || '';
+    document.getElementById('projName').value = p.name || '';
+    
+    printToPDF();
+    
+    tableData = origData;
+    document.getElementById('projClient').value = origClient;
+    document.getElementById('projAdresa').value = origAdresa;
+    document.getElementById('projName').value = origName;
+}
+
 // ========================
 // PROJECT MANAGEMENT & CUI LOOKUP
 // ========================
@@ -1274,6 +1298,7 @@ function renderHistory() {
             </td>
             <td style="display:flex; gap:5px; justify-content:center;" onclick="event.stopPropagation()">
                 <button class="btn-add" style="padding: 4px 8px; opacity: ${p.completed ? '0.5' : '1'};" onclick="loadProjectFromHistory(${p.id})" title="Încarcă">📂</button>
+                <button class="btn-add" style="padding: 4px 8px; background:#3b82f6;" onclick="printProjectToPDF(${p.id})" title="Tipărește PDF">🖨️</button>
                 <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory(${p.id})" title="Șterge">🗑️</button>
             </td>
         </tr>

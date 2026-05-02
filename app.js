@@ -966,15 +966,15 @@ function printToPDF() {
 
                     let schita = "";
                     if (type === 'etrieri') {
-                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><rect x="5" y="5" width="40" height="25" fill="none" stroke="#1e40af" stroke-width="2" rx="2"/></svg>`;
+                        schita = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="35" style="display:inline-block; vertical-align:middle; visibility:visible !important;"><rect x="5" y="5" width="40" height="25" fill="none" stroke="#1e40af" stroke-width="2" rx="2" style="visibility:visible !important;"/></svg>`;
                     } else if (type === 'agrafe') {
-                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="M 5,25 L 5,10 L 45,10 L 45,25" fill="none" stroke="#1e40af" stroke-width="2"/></svg>`;
+                        schita = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="35" style="display:inline-block; vertical-align:middle; visibility:visible !important;"><path d="M 5,25 L 5,10 L 45,10 L 45,25" fill="none" stroke="#1e40af" stroke-width="2" style="visibility:visible !important;"/></svg>`;
                     } else if (type === 'profileU') {
-                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="M 5,10 L 5,30 L 45,30 L 45,10" fill="none" stroke="#1e40af" stroke-width="2"/></svg>`;
+                        schita = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="35" style="display:inline-block; vertical-align:middle; visibility:visible !important;"><path d="M 5,10 L 5,30 L 45,30 L 45,10" fill="none" stroke="#1e40af" stroke-width="2" style="visibility:visible !important;"/></svg>`;
                     } else if (type === 'arcade') {
-                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="M 5,28 A 20,20 0 0,1 45,28" fill="none" stroke="#1e40af" stroke-width="2"/></svg>`;
+                        schita = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="35" style="display:inline-block; vertical-align:middle; visibility:visible !important;"><path d="M 5,28 A 20,20 0 0,1 45,28" fill="none" stroke="#1e40af" stroke-width="2" style="visibility:visible !important;"/></svg>`;
                     } else if (type === 'bare') {
-                        schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><line x1="5" y1="18" x2="45" y2="18" stroke="#1e40af" stroke-width="2"/></svg>`;
+                        schita = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="35" style="display:inline-block; vertical-align:middle; visibility:visible !important;"><line x1="5" y1="18" x2="45" y2="18" stroke="#1e40af" stroke-width="2" style="visibility:visible !important;"/></svg>`;
                     } else if (type === 'personalizat') {
                         let segs = r.segments || [];
                         if (segs.length === 0 && r.segmentsStr) {
@@ -1008,7 +1008,7 @@ function printToPDF() {
                                 y: 5 + (p.y - minY) * sc
                             }));
                             let dStr = `M ${finalPts[0].x},${finalPts[0].y} ` + finalPts.slice(1).map(p => `L ${p.x},${p.y}`).join(' ');
-                            schita = `<svg width="50" height="35" style="display:inline-block; vertical-align:middle;"><path d="${dStr}" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round"/></svg>`;
+                            schita = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="35" style="display:inline-block; vertical-align:middle; visibility:visible !important;"><path d="${dStr}" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" style="visibility:visible !important;"/></svg>`;
                         } else {
                             schita = `-`;
                         }
@@ -1050,8 +1050,10 @@ function printToPDF() {
     printArea.innerHTML = content;
     document.body.appendChild(printArea);
     window.print();
-    document.body.removeChild(printArea);
-    document.head.removeChild(style);
+    setTimeout(() => {
+        try { document.body.removeChild(printArea); } catch(e) {}
+        try { document.head.removeChild(style); } catch(e) {}
+    }, 1000);
 }
 
 function printProjectToPDF(id) {

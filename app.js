@@ -1240,7 +1240,10 @@ function saveCurrentProject() {
     if (isCloudActive && db) {
         db.collection("arm_projects").doc(newProj.id.toString()).set(newProj)
           .then(() => {
-              showToast('Salvat în Cloud!');
+              projects.push(newProj);
+              localStorage.setItem('arm_projects', JSON.stringify(projects));
+              showToast('Salvat în Cloud și Local!');
+              renderHistory();
           })
           .catch(() => saveLocalOnly(newProj, projects));
     } else {

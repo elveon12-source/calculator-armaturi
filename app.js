@@ -1448,6 +1448,8 @@ function drawSketch(ctx, canvas, currentSnap = null) {
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(6, 182, 212, 0.4)';
+    ctx.shadowBlur = 8;
 
     ctx.beginPath();
     ctx.moveTo(sketchPoints[0].x, sketchPoints[0].y);
@@ -1460,18 +1462,33 @@ function drawSketch(ctx, canvas, currentSnap = null) {
     }
     ctx.stroke();
 
+    // Reset shadow
+    ctx.shadowBlur = 0;
+
+    // Draw node dots
     ctx.fillStyle = '#ffffff';
     sketchPoints.forEach(p => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
         ctx.fill();
     });
     
     if (isDrawing && currentSnap) {
+        // Red tip dot
         ctx.fillStyle = '#f87171'; 
         ctx.beginPath();
-        ctx.arc(currentSnap.x, currentSnap.y, 5, 0, Math.PI * 2);
+        ctx.arc(currentSnap.x, currentSnap.y, 6, 0, Math.PI * 2);
         ctx.fill();
+
+        // Length and angle info tooltip next to pointer
+        const lastP = sketchPoints[sketchPoints.length - 1];
+        const dist = Math.sqrt(Math.pow(currentSnap.x - lastP.x, 2) + Math.pow(currentSnap.y - lastP.y, 2));
+        const lengthCm = Math.round(dist / 3);
+        const angle = currentSnap.angle !== undefined ? Math.round(currentSnap.angle) : 0;
+
+        ctx.font = 'bold 12px "Outfit", sans-serif';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`${lengthCm} cm | ${angle}°`, currentSnap.x + 15, currentSnap.y - 15);
     }
 }
 

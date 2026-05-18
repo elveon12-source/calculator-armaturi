@@ -1,4 +1,4 @@
-const CACHE_NAME = 'armaturi-pro-v119';
+const CACHE_NAME = 'armaturi-pro-v120';
 const ASSETS = [
     './',
     './index.html',

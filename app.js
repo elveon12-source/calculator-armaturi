@@ -1592,7 +1592,7 @@ function startEditProject(id) {
     Object.keys(tableData).forEach(t => renderTable(t));
     recalcAll();
 
-    // Set edit mode
+    // Activate edit mode
     editingProjectId = id.toString();
     const banner = document.getElementById('editBanner');
     const bannerName = document.getElementById('editBannerName');
@@ -1601,22 +1601,31 @@ function startEditProject(id) {
     if (bannerName) bannerName.textContent = p.name;
     if (saveBtn) saveBtn.style.display = 'none';
 
-    // Switch to Proiecte tab to see the banner, then to Etrieri for editing
-    const tabProiecte = document.getElementById('tabProiecte');
-    if (tabProiecte) tabProiecte.click();
-    setTimeout(() => {
-        const tabEtr = document.getElementById('tabEtrieri');
-        if (tabEtr) tabEtr.click();
-    }, 300);
-    showToast(`Editează: "${p.name}"`);
+    // Show floating edit bar (visible on ALL tabs)
+    const editBar = document.getElementById('editModeBar');
+    const editBarName = document.getElementById('editBarProjName');
+    const footer = document.getElementById('summaryFooter');
+    if (editBar) editBar.style.display = 'flex';
+    if (editBarName) editBarName.textContent = p.name;
+    // Push footer up so edit bar doesn't overlap it
+    if (footer) footer.style.marginBottom = '70px';
+
+    // Go directly to Etrieri for editing
+    const tabEtr = document.getElementById('tabEtrieri');
+    if (tabEtr) tabEtr.click();
+    showToast(`✏️ Editează: "${p.name}" — modifică produsele, apoi apasă Salvează`);
 }
 
 function cancelEditProject() {
     editingProjectId = null;
     const banner = document.getElementById('editBanner');
     const saveBtn = document.getElementById('btnSaveProject');
+    const editBar = document.getElementById('editModeBar');
+    const footer = document.getElementById('summaryFooter');
     if (banner) banner.classList.remove('active');
     if (saveBtn) saveBtn.style.display = '';
+    if (editBar) editBar.style.display = 'none';
+    if (footer) footer.style.marginBottom = '';
 }
 
 // ========================

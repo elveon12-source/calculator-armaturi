@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=53">
+    <link rel="stylesheet" href="style.css?v=54">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
@@ -1016,6 +1016,26 @@
                         <p style="font-size: 10px; color: var(--text-muted); margin-top: 10px;">
                             * Aceste date sunt salvate local pe acest dispozitiv și vor apărea automat în orice PDF exportat.
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Migrare Proiecte Vechi -->
+            <div class="calc-card" style="margin-bottom: 20px; border-color: rgba(139,92,246,0.3); background: rgba(139,92,246,0.04);">
+                <div class="card-header" style="border-color: rgba(139,92,246,0.2);">
+                    <h3 style="color: #a78bfa;">🔄 Migrare Proiecte Vechi</h3>
+                    <span class="badge" style="background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.4);">Admin</span>
+                </div>
+                <div class="calc-form">
+                    <p style="font-size:13px; color: var(--text-secondary); line-height:1.6;">
+                        Dacă ai proiecte salvate <strong style="color:#a78bfa;">înainte de introducerea multi-utilizatori</strong>, 
+                        apasă butonul de mai jos pentru a le muta la utilizatorul curent logat.
+                    </p>
+                    <div class="form-row" style="margin-top: 8px;">
+                        <button class="btn-add" onclick="migrateOldProjectsToCurrentUser(false)"
+                            style="width:100%; border-radius:8px; background: linear-gradient(135deg,#7c3aed,#4f46e5); border:none; font-size:14px;">
+                            🔄 Mută proiectele vechi la utilizatorul curent
+                        </button>
                     </div>
                 </div>
             </div>

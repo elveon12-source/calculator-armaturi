@@ -49,11 +49,91 @@ function initUserSession() {
                 updateCloudUI('connected');
                 initCloudSync();
             }
+            // Auto-migrate old projects if user storage is empty but old storage has data
+            autoMigrateOldProjects();
         }, 1500);
     } else {
         showLoginOverlay();
     }
 }
+
+/**
+ * Migrates all projects from old 'arm_projects' key to 'arm_projects_${currentUser}'
+ * in both localStorage and Firestore. Safe to call multiple times (idempotent).
+ */
+function migrateOldProjectsToCurrentUser(silent) {
+    if (!currentUser) { showToast('Loghează-te mai întâi!'); return; }
+
+    // --- localStorage migration ---
+    let oldLocal = [];
+    try {
+        const raw = localStorage.getItem('arm_projects');
+        if (raw) oldLocal = JSON.parse(raw) || [];
+    } catch(e) { oldLocal = []; }
+
+    const userKey = getUserStorageKey();
+    let userLocal = [];
+    try {
+        const raw2 = localStorage.getItem(userKey);
+        if (raw2) userLocal = JSON.parse(raw2) || [];
+    } catch(e) { userLocal = []; }
+
+    // Merge: old projects not already in user's list
+    const userIds = new Set(userLocal.map(p => p.id.toString()));
+    let added = 0;
+    oldLocal.forEach(p => {
+        if (!userIds.has(p.id.toString())) {
+            userLocal.push(p);
+            added++;
+        }
+    });
+
+    if (added > 0) {
+        userLocal.sort((a, b) => b.id - a.id);
+        localStorage.setItem(userKey, JSON.stringify(userLocal));
+        if (!silent) showToast(`✅ ${added} proiect(e) migrate la "${currentUser}"!`);
+        renderHistory();
+    } else {
+        if (!silent) showToast(`ℹ️ Nu există proiecte vechi de migrat.`);
+    }
+
+    // --- Firestore migration ---
+    if (db && isCloudActive) {
+        const oldCollection = 'arm_projects';
+        const newCollection = getUserCloudCollection();
+        if (oldCollection === newCollection) return; // same, skip
+
+        db.collection(oldCollection).get().then(snapshot => {
+            if (snapshot.empty) return;
+            let count = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                db.collection(newCollection).doc(doc.id).set(data, { merge: true })
+                  .then(() => { count++; })
+                  .catch(() => {});
+            });
+            if (!silent) {
+                setTimeout(() => {
+                    if (count > 0) showToast(`☁️ ${count} proiect(e) sincronizate în Cloud pentru "${currentUser}"`);
+                }, 1500);
+            }
+        }).catch(() => {});
+    }
+}
+
+function autoMigrateOldProjects() {
+    if (!currentUser) return;
+    const userKey = getUserStorageKey();
+    const userRaw = localStorage.getItem(userKey);
+    const oldRaw = localStorage.getItem('arm_projects');
+    // Only auto-migrate if user has no projects but old key has some
+    const userEmpty = !userRaw || JSON.parse(userRaw).length === 0;
+    const hasOld = oldRaw && JSON.parse(oldRaw).length > 0;
+    if (userEmpty && hasOld) {
+        migrateOldProjectsToCurrentUser(false);
+    }
+}
+
 
 function showLoginOverlay() {
     const overlay = document.getElementById('loginOverlay');

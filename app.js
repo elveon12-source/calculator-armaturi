@@ -539,14 +539,17 @@ function showUpdateToast(registration) {
 // RECALC ALL
 // ========================
 function recalcAll() {
-    calcEtrieri(); calcAgrafe(); calcArcade(); calcProfileU();
-    calcBare(); calcSarma(); calcTabla(); calcCornier();
-    
+    // Each calc wrapped in try/catch: some tabs may not have DOM elements
+    // mounted yet (e.g. Tablă tab never visited), which would throw TypeError
+    [calcEtrieri, calcAgrafe, calcArcade, calcProfileU, calcBare, calcSarma, calcTabla, calcCornier].forEach(fn => {
+        try { fn(); } catch(e) { /* tab not rendered yet, skip */ }
+    });
+
     Object.keys(tableData).forEach(type => {
         tableData[type].forEach(row => calcRowValues(type, row));
         updateTableTotals(type);
     });
-    
+
     updateGrandTotal();
     saveToLocalStorage();
 }

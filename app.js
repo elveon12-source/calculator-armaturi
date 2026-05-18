@@ -41,6 +41,15 @@ function initUserSession() {
         currentUser = saved.trim();
         hideLoginOverlay();
         updateUserBadge();
+        // Restart cloud sync with correct user collection
+        // Use a small delay to allow Firebase to finish initializing
+        setTimeout(() => {
+            if (db) {
+                cloudReady = true;
+                updateCloudUI('connected');
+                initCloudSync();
+            }
+        }, 1500);
     } else {
         showLoginOverlay();
     }
@@ -80,7 +89,10 @@ function confirmLogin() {
     hideLoginOverlay();
     updateUserBadge();
     renderHistory();
-    if (typeof initCloudSync === 'function' && db) {
+    // Start cloud sync for this user (restart if already running)
+    if (db) {
+        cloudReady = true;
+        updateCloudUI('connected');
         initCloudSync();
     }
     showToast(`Bun venit, ${name}!`);
@@ -119,6 +131,8 @@ const firebaseConfig = {
 
 let db = null;
 let isCloudActive = false;
+let cloudSyncUnsubscribe = null; // Track active listener for cleanup
+let cloudReady = false; // True once Firebase has confirmed connection
 
 function updateCloudUI(status) {
     const el = document.getElementById('cloudStatus');
@@ -156,20 +170,30 @@ try {
             if (!isCloudActive) updateCloudUI('local');
         }, 5000);
 
-        db.collection(getUserCloudCollection()).limit(1).get()
+        // Use generic collection for connection test (currentUser not set yet at this point)
+        db.collection('arm_projects_test').limit(1).get()
           .then(() => {
               clearTimeout(timeout);
+              cloudReady = true;
               updateCloudUI('connected');
-              initCloudSync();
+              // initCloudSync will be called by initUserSession once currentUser is known
           })
-          .catch(err => {
-              clearTimeout(timeout);
-              if (err.code === 'not-found' || err.message.includes('not exist')) {
-                  updateCloudUI('not-created');
-              } else {
-                  console.warn("Firestore access denied:", err);
-                  updateCloudUI('error');
-              }
+          .catch(() => {
+              // Also try the base collection for backwards compatibility
+              db.collection('arm_projects').limit(1).get()
+                .then(() => {
+                    clearTimeout(timeout);
+                    cloudReady = true;
+                    updateCloudUI('connected');
+                })
+                .catch(err => {
+                    clearTimeout(timeout);
+                    if (err.code === 'not-found' || err.message.includes('not exist')) {
+                        updateCloudUI('not-created');
+                    } else {
+                        updateCloudUI('local');
+                    }
+                });
           });
     }
 } catch(e) {
@@ -177,11 +201,20 @@ try {
 }
 
 function initCloudSync() {
-    if (!db) return;
-    console.log("Cloud Sync: Initializing...");
+    if (!db || !currentUser) return;
+    
+    // Unsubscribe from previous listener if any (handles user switch)
+    if (cloudSyncUnsubscribe) {
+        cloudSyncUnsubscribe();
+        cloudSyncUnsubscribe = null;
+    }
+    
+    const collection = getUserCloudCollection();
+    const storageKey = getUserStorageKey();
+    console.log(`Cloud Sync: Starting for user "${currentUser}" (collection: ${collection})`);
     
     // 1. LISTEN for changes from Cloud
-    db.collection(getUserCloudCollection()).onSnapshot(snapshot => {
+    cloudSyncUnsubscribe = db.collection(collection).onSnapshot(snapshot => {
         // Process deletions first
         let localProjects = getProjectsFromStorage();
         let wasDeleted = false;
@@ -194,7 +227,7 @@ function initCloudSync() {
         });
         
         if (wasDeleted) {
-            localStorage.setItem('arm_projects', JSON.stringify(localProjects));
+            localStorage.setItem(storageKey, JSON.stringify(localProjects));
         }
 
         const cloudProjects = [];
@@ -220,7 +253,7 @@ function initCloudSync() {
         const finalProjects = Array.from(mergedMap.values()).sort((a, b) => b.id - a.id);
         console.log(`Cloud Sync: Merged total of ${finalProjects.length} projects.`);
         
-        localStorage.setItem('arm_projects', JSON.stringify(finalProjects));
+        localStorage.setItem(storageKey, JSON.stringify(finalProjects));
         renderHistory();
         updateCloudUI('connected');
     }, error => {

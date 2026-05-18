@@ -1674,6 +1674,8 @@ function startEditProject(id) {
 
     // Activate edit mode
     editingProjectId = id.toString();
+
+    // Show the Proiecte tab banner
     const banner = document.getElementById('editBanner');
     const bannerName = document.getElementById('editBannerName');
     const saveBtn = document.getElementById('btnSaveProject');
@@ -1681,31 +1683,26 @@ function startEditProject(id) {
     if (bannerName) bannerName.textContent = p.name;
     if (saveBtn) saveBtn.style.display = 'none';
 
-    // Show floating edit bar (visible on ALL tabs)
-    const editBar = document.getElementById('editModeBar');
-    const editBarName = document.getElementById('editBarProjName');
-    const footer = document.getElementById('summaryFooter');
-    if (editBar) editBar.style.display = 'flex';
-    if (editBarName) editBarName.textContent = p.name;
-    // Push footer up so edit bar doesn't overlap it
-    if (footer) footer.style.marginBottom = '70px';
+    // Show the sticky TOP banner (always visible on all tabs)
+    const topBanner = document.getElementById('editModeTopBanner');
+    const topBannerName = document.getElementById('editTopBannerName');
+    if (topBanner) topBanner.style.display = 'flex';
+    if (topBannerName) topBannerName.textContent = p.name;
 
     // Go directly to Etrieri for editing
     const tabEtr = document.getElementById('tabEtrieri');
     if (tabEtr) tabEtr.click();
-    showToast(`✏️ Editează: "${p.name}" — modifică produsele, apoi apasă Salvează`);
+    showToast(`✏️ Editează: "${p.name}" — apasă GALBEN sus pentru a salva`);
 }
 
 function cancelEditProject() {
     editingProjectId = null;
     const banner = document.getElementById('editBanner');
     const saveBtn = document.getElementById('btnSaveProject');
-    const editBar = document.getElementById('editModeBar');
-    const footer = document.getElementById('summaryFooter');
+    const topBanner = document.getElementById('editModeTopBanner');
     if (banner) banner.classList.remove('active');
     if (saveBtn) saveBtn.style.display = '';
-    if (editBar) editBar.style.display = 'none';
-    if (footer) footer.style.marginBottom = '';
+    if (topBanner) topBanner.style.display = 'none';
 }
 
 // ========================

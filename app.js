@@ -4,7 +4,7 @@
    With Cache Busing & Emergency Reset
    ============================================ */
 
-const APP_VERSION = "10.3 (Smart Sketch)";
+const APP_VERSION = "10.4 (Multi-User)";
 
 // ========================
 // GLOBAL DATA STORES
@@ -20,6 +20,89 @@ let rowCounters = {
 };
 
 let deferredPrompt;
+
+// ========================
+// MULTI-USER MANAGEMENT
+// ========================
+let currentUser = null;
+let editingProjectId = null;
+
+function getUserStorageKey() {
+    return currentUser ? `arm_projects_${currentUser}` : 'arm_projects';
+}
+
+function getUserCloudCollection() {
+    return currentUser ? `arm_projects_${currentUser}` : 'arm_projects';
+}
+
+function initUserSession() {
+    const saved = localStorage.getItem('arm_current_user');
+    if (saved && saved.trim()) {
+        currentUser = saved.trim();
+        hideLoginOverlay();
+        updateUserBadge();
+    } else {
+        showLoginOverlay();
+    }
+}
+
+function showLoginOverlay() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) {
+        overlay.classList.remove('hidden');
+        setTimeout(() => {
+            const inp = document.getElementById('loginUsernameInput');
+            if (inp) inp.focus();
+        }, 300);
+    }
+}
+
+function hideLoginOverlay() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+function confirmLogin() {
+    const inp = document.getElementById('loginUsernameInput');
+    if (!inp) return;
+    const name = inp.value.trim();
+    if (!name || name.length < 1) {
+        inp.style.borderColor = '#ef4444';
+        inp.placeholder = 'Introdu un nume / cod valid!';
+        setTimeout(() => {
+            inp.style.borderColor = '';
+            inp.placeholder = 'Ex: Ion, Echipa1, ELV...';
+        }, 2000);
+        return;
+    }
+    localStorage.setItem('arm_current_user', name);
+    currentUser = name;
+    hideLoginOverlay();
+    updateUserBadge();
+    renderHistory();
+    if (typeof initCloudSync === 'function' && db) {
+        initCloudSync();
+    }
+    showToast(`Bun venit, ${name}!`);
+}
+
+function switchUser() {
+    if (!confirm(`Ești sigur că vrei să schimbi utilizatorul?\n\nProiectele tale sunt salvate și vei putea reveni cu același cod.`)) return;
+    localStorage.removeItem('arm_current_user');
+    currentUser = null;
+    editingProjectId = null;
+    cancelEditProject();
+    showLoginOverlay();
+    const inp = document.getElementById('loginUsernameInput');
+    if (inp) inp.value = '';
+}
+
+function updateUserBadge() {
+    const badge = document.getElementById('userBadgeText');
+    if (badge && currentUser) {
+        badge.textContent = currentUser;
+    }
+}
 
 // ========================
 // FIREBASE SAFE CLOUD SYNC
@@ -73,7 +156,7 @@ try {
             if (!isCloudActive) updateCloudUI('local');
         }, 5000);
 
-        db.collection("arm_projects").limit(1).get()
+        db.collection(getUserCloudCollection()).limit(1).get()
           .then(() => {
               clearTimeout(timeout);
               updateCloudUI('connected');
@@ -98,7 +181,7 @@ function initCloudSync() {
     console.log("Cloud Sync: Initializing...");
     
     // 1. LISTEN for changes from Cloud
-    db.collection("arm_projects").onSnapshot(snapshot => {
+    db.collection(getUserCloudCollection()).onSnapshot(snapshot => {
         // Process deletions first
         let localProjects = getProjectsFromStorage();
         let wasDeleted = false;
@@ -151,7 +234,7 @@ function initCloudSync() {
         if (localProjects.length > 0) {
             console.log(`Cloud Sync: Migrating ${localProjects.length} local projects...`);
             localProjects.forEach(proj => {
-                db.collection("arm_projects").doc(proj.id.toString()).set(proj, { merge: true })
+                db.collection(getUserCloudCollection()).doc(proj.id.toString()).set(proj, { merge: true })
                   .catch(e => console.warn("Cloud Sync: Migration skip:", e));
             });
         }
@@ -164,6 +247,7 @@ function initCloudSync() {
 // INITIALIZATION
 // ========================
 document.addEventListener('DOMContentLoaded', () => {
+    initUserSession();
     initTabs();
     initParticles();
     initPWA();
@@ -172,9 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHistory();
     recalcAll();
     ['etrieri', 'agrafe', 'arcade', 'profileU', 'bare', 'sarma', 'tabla', 'cornier'].forEach(type => renderTable(type));
-    
 
-    
     const verEl = document.getElementById('appVersion');
     if (verEl) verEl.textContent = `v${APP_VERSION}`;
 });
@@ -1202,7 +1284,8 @@ function saveQuickPF() {
 
 function getProjectsFromStorage() {
     try {
-        const saved = localStorage.getItem('arm_projects');
+        const key = getUserStorageKey();
+        const saved = localStorage.getItem(key);
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         return Array.isArray(parsed) ? parsed : [];
@@ -1223,8 +1306,37 @@ function saveCurrentProject() {
     
     const projects = getProjectsFromStorage();
     const timestamp = Date.now();
+    const isEditing = editingProjectId !== null;
 
-    const newProj = {
+    let projObj;
+    if (isEditing) {
+        // UPDATE existing project
+        const existIdx = projects.findIndex(p => p.id && p.id.toString() === editingProjectId.toString());
+        if (existIdx === -1) { showToast('Proiectul nu mai exista!'); return; }
+        projObj = {
+            ...projects[existIdx],
+            lastUpdated: timestamp,
+            name: name,
+            client: document.getElementById('projClient').value,
+            cui: document.getElementById('projCUI').value,
+            adresa: document.getElementById('projAdresa').value,
+            data: JSON.parse(JSON.stringify(tableData)),
+            totalWeight: parseFloat(document.getElementById('grandTotalWeight').textContent) || 0
+        };
+        projects[existIdx] = projObj;
+        localStorage.setItem(getUserStorageKey(), JSON.stringify(projects));
+        if (isCloudActive && db) {
+            db.collection(getUserCloudCollection()).doc(projObj.id.toString()).set(projObj)
+              .catch(() => {});
+        }
+        showToast('Proiect actualizat cu succes!');
+        renderHistory();
+        cancelEditProject();
+        return;
+    }
+
+    // CREATE new project
+    projObj = {
         id: timestamp,
         lastUpdated: timestamp,
         date: new Date().toLocaleString('ro-RO'),
@@ -1238,22 +1350,22 @@ function saveCurrentProject() {
     };
 
     if (isCloudActive && db) {
-        db.collection("arm_projects").doc(newProj.id.toString()).set(newProj)
+        db.collection(getUserCloudCollection()).doc(projObj.id.toString()).set(projObj)
           .then(() => {
-              projects.push(newProj);
-              localStorage.setItem('arm_projects', JSON.stringify(projects));
+              projects.push(projObj);
+              localStorage.setItem(getUserStorageKey(), JSON.stringify(projects));
               showToast('Salvat în Cloud și Local!');
               renderHistory();
           })
-          .catch(() => saveLocalOnly(newProj, projects));
+          .catch(() => saveLocalOnly(projObj, projects));
     } else {
-        saveLocalOnly(newProj, projects);
+        saveLocalOnly(projObj, projects);
     }
 }
 
 function saveLocalOnly(newProj, projects) {
     projects.push(newProj);
-    localStorage.setItem('arm_projects', JSON.stringify(projects));
+    localStorage.setItem(getUserStorageKey(), JSON.stringify(projects));
     showToast('Proiect salvat local!');
     renderHistory();
 }
@@ -1365,6 +1477,7 @@ function renderHistory() {
                 </label>
             </td>
             <td style="display:flex; gap:5px; justify-content:center;" onclick="event.stopPropagation()">
+                <button class="btn-add" style="padding: 4px 8px; background:#8b5cf6;" onclick="startEditProject('${p.id}')" title="Modifică proiect">✏️</button>
                 <button class="btn-add" style="padding: 4px 8px; opacity: ${p.completed ? '0.5' : '1'};" onclick="loadProjectFromHistory('${p.id}')" title="Încarcă">📂</button>
                 <button class="btn-add" style="padding: 4px 8px; background:#3b82f6;" onclick="printProjectToPDF('${p.id}')" title="Tipărește PDF">🖨️</button>
                 <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory('${p.id}')" title="Șterge">🗑️</button>
@@ -1415,15 +1528,63 @@ function loadProjectFromHistory(id) {
 }
 
 function deleteProjectFromHistory(id) {
-    if (!confirm('Ștergi proiectul?')) return;
+    if (!confirm('Ștergei proiectul?')) return;
     let projects = getProjectsFromStorage();
-    localStorage.setItem('arm_projects', JSON.stringify(projects.filter(x => x.id !== id)));
+    localStorage.setItem(getUserStorageKey(), JSON.stringify(projects.filter(x => x.id.toString() !== id.toString())));
     renderHistory();
     if (isCloudActive && db) {
-        db.collection("arm_projects").doc(id.toString()).delete().catch(() => {});
+        db.collection(getUserCloudCollection()).doc(id.toString()).delete().catch(() => {});
     }
 }
 
+// ========================
+// EDIT PROJECT FUNCTIONS
+// ========================
+
+function startEditProject(id) {
+    const projects = getProjectsFromStorage();
+    const p = projects.find(x => x.id && x.id.toString() === id.toString());
+    if (!p) { showToast('Proiectul nu a fost găsit!'); return; }
+
+    if (!confirm(`Încarci proiectul "${p.name}" pentru modificare?`)) return;
+
+    // Load data into tables
+    Object.keys(tableData).forEach(k => {
+        tableData[k] = (p.data && p.data[k]) ? [...p.data[k]] : [];
+    });
+    document.getElementById('projName').value = p.name;
+    document.getElementById('projClient').value = p.client || '';
+    document.getElementById('projCUI').value = p.cui || '';
+    document.getElementById('projAdresa').value = p.adresa || '';
+    Object.keys(tableData).forEach(t => renderTable(t));
+    recalcAll();
+
+    // Set edit mode
+    editingProjectId = id.toString();
+    const banner = document.getElementById('editBanner');
+    const bannerName = document.getElementById('editBannerName');
+    const saveBtn = document.getElementById('btnSaveProject');
+    if (banner) banner.classList.add('active');
+    if (bannerName) bannerName.textContent = p.name;
+    if (saveBtn) saveBtn.style.display = 'none';
+
+    // Switch to Proiecte tab to see the banner, then to Etrieri for editing
+    const tabProiecte = document.getElementById('tabProiecte');
+    if (tabProiecte) tabProiecte.click();
+    setTimeout(() => {
+        const tabEtr = document.getElementById('tabEtrieri');
+        if (tabEtr) tabEtr.click();
+    }, 300);
+    showToast(`Editează: "${p.name}"`);
+}
+
+function cancelEditProject() {
+    editingProjectId = null;
+    const banner = document.getElementById('editBanner');
+    const saveBtn = document.getElementById('btnSaveProject');
+    if (banner) banner.classList.remove('active');
+    if (saveBtn) saveBtn.style.display = '';
+}
 
 // ========================
 // PERSONALIZAT LOGIC

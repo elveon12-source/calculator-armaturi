@@ -107,13 +107,70 @@ function confirmLogin() {
 
     hideLoginOverlay();
     updateUserBadge();
+
+    // Auto-migrate from old key (arm_projects_Name) to new (arm_projects_Name_PIN)
+    autoMigrateFromOldKey(name, pin);
+
     renderHistory();
     if (db) {
         cloudReady = true;
         updateCloudUI('connected');
         initCloudSync();
+        // Firestore migration after DB ready
+        setTimeout(() => migrateFirestoreOldKey(name, pin), 2000);
     }
     showToast(`Bun venit, ${name}! 🔐`);
+}
+
+/**
+ * Migrates localStorage from old format 'arm_projects_Name'
+ * to new format 'arm_projects_Name_PIN' — runs silently on first PIN login.
+ */
+function autoMigrateFromOldKey(name, pin) {
+    const oldKey = `arm_projects_${name}`;
+    const newKey = `arm_projects_${name}_${pin}`;
+    if (oldKey === newKey) return; // same, nothing to do
+
+    let oldData = [];
+    try { oldData = JSON.parse(localStorage.getItem(oldKey) || '[]'); } catch(e) {}
+    if (!Array.isArray(oldData) || oldData.length === 0) return;
+
+    let newData = [];
+    try { newData = JSON.parse(localStorage.getItem(newKey) || '[]'); } catch(e) {}
+
+    // Only migrate if new key is empty
+    if (newData.length > 0) return;
+
+    localStorage.setItem(newKey, JSON.stringify(oldData));
+    showToast(`✅ ${oldData.length} proiect(e) migrate automat la contul tău!`);
+}
+
+/**
+ * Copies Firestore collection from 'arm_projects_Name' to 'arm_projects_Name_PIN'.
+ * Runs once silently after DB is ready.
+ */
+function migrateFirestoreOldKey(name, pin) {
+    if (!db) return;
+    const oldCol = `arm_projects_${name}`;
+    const newCol = `arm_projects_${name}_${pin}`;
+    if (oldCol === newCol) return;
+
+    // Check new collection first — only migrate if empty
+    db.collection(newCol).limit(1).get().then(snap => {
+        if (!snap.empty) return; // already has data, skip
+        db.collection(oldCol).get().then(oldSnap => {
+            if (oldSnap.empty) return;
+            let count = 0;
+            oldSnap.forEach(doc => {
+                db.collection(newCol).doc(doc.id).set(doc.data(), { merge: true })
+                  .then(() => { count++; })
+                  .catch(() => {});
+            });
+            setTimeout(() => {
+                if (count > 0) showToast(`☁️ ${count} proiecte migrate în Cloud!`);
+            }, 2000);
+        }).catch(() => {});
+    }).catch(() => {});
 }
 
 function switchUser() {

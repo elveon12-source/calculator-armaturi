@@ -1500,15 +1500,15 @@ function toggleProjectDetails(id) {
 function toggleItemComplete(projId, cat, idx, isCompleted, event) {
     if(event) event.stopPropagation();
     let projects = getProjectsFromStorage();
-    const proj = projects.find(x => x.id === projId);
+    const proj = projects.find(x => x.id && x.id.toString() === projId.toString());
     if (!proj || !proj.data || !proj.data[cat] || !proj.data[cat][idx]) return;
     
     proj.data[cat][idx].completed = isCompleted;
-    localStorage.setItem('arm_projects', JSON.stringify(projects));
+    localStorage.setItem(getUserStorageKey(), JSON.stringify(projects));
     renderHistory();
 
     if (isCloudActive && db) {
-        db.collection("arm_projects").doc(projId.toString()).update({
+        db.collection(getUserCloudCollection()).doc(projId.toString()).update({
             [`data.${cat}`]: proj.data[cat],
             lastUpdated: Date.now()
         }).catch(e => console.error("Cloud sync failed", e));
@@ -1594,7 +1594,6 @@ function renderHistory() {
             </td>
             <td style="display:flex; gap:5px; justify-content:center;" onclick="event.stopPropagation()">
                 <button class="btn-add" style="padding: 4px 8px; background:#8b5cf6;" onclick="startEditProject('${p.id}')" title="Modifică proiect">✏️</button>
-                <button class="btn-add" style="padding: 4px 8px; opacity: ${p.completed ? '0.5' : '1'};" onclick="loadProjectFromHistory('${p.id}')" title="Încarcă">📂</button>
                 <button class="btn-add" style="padding: 4px 8px; background:#3b82f6;" onclick="printProjectToPDF('${p.id}')" title="Tipărește PDF">🖨️</button>
                 <button class="btn-share" style="padding: 4px 8px; background:#ef4444;" onclick="deleteProjectFromHistory('${p.id}')" title="Șterge">🗑️</button>
             </td>
@@ -1608,15 +1607,16 @@ function renderHistory() {
 
 function toggleProjectComplete(id, isCompleted) {
     let projects = getProjectsFromStorage();
-    const proj = projects.find(x => x.id === id);
+    const proj = projects.find(x => x.id && x.id.toString() === id.toString());
     if (proj) {
         proj.completed = isCompleted;
-        localStorage.setItem('arm_projects', JSON.stringify(projects));
+        proj.lastUpdated = Date.now();
+        localStorage.setItem(getUserStorageKey(), JSON.stringify(projects));
         renderHistory();
         if (isCloudActive && db) {
-            db.collection("arm_projects").doc(id.toString()).update({ 
+            db.collection(getUserCloudCollection()).doc(id.toString()).update({ 
                 completed: isCompleted,
-                lastUpdated: Date.now()
+                lastUpdated: proj.lastUpdated
             }).catch(() => {});
         }
     }

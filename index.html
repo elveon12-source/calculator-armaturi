@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=60">
+    <link rel="stylesheet" href="style.css?v=61">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
@@ -1148,17 +1148,30 @@
         <div class="login-card">
             <div class="login-logo">🛠️</div>
             <h2>Calculator Armături</h2>
-            <p>Introdu numele tău sau un cod unic pentru a accesa proiectele tale.<br>
-            <strong style="color:#38bdf8;">Fiecare utilizator are proiectele lui separate.</strong></p>
-            <div class="login-input-wrapper">
-                <input type="text" id="loginUsernameInput" placeholder="Ex: Ion, Echipa1, ELV..." 
+            <p>Introdu <strong style="color:#38bdf8;">numele</strong> și <strong style="color:#f59e0b;">codul PIN</strong> personal.<br>
+            <span style="font-size:12px; color:#94a3b8;">Doi utilizatori cu același nume dar PIN diferit au conturi complet separate.</span></p>
+
+            <div class="login-input-wrapper" style="margin-bottom: 10px;">
+                <input type="text" id="loginUsernameInput" placeholder="Numele tău (ex: Ion, Lucian, Echipa1)"
                     maxlength="30" autocomplete="off"
+                    onkeydown="if(event.key==='Enter') document.getElementById('loginPinInput').focus()">
+            </div>
+
+            <div class="login-input-wrapper" style="margin-bottom: 6px;">
+                <input type="password" id="loginPinInput" placeholder="Cod PIN (4-6 cifre)"
+                    maxlength="6" autocomplete="off" inputmode="numeric"
+                    style="letter-spacing: 6px; font-size: 20px; text-align: center;"
                     onkeydown="if(event.key==='Enter') confirmLogin()">
             </div>
+
+            <p style="font-size:11px; color:#64748b; margin: 0 0 12px 0; text-align:center;">
+                🔒 Prima dată? Alege un PIN și reține-l. Nu îl poți recupera dacă îl uiți.
+            </p>
+
             <button class="btn-login" onclick="confirmLogin()">
-                ▶ Intru în Aplicatie
+                ▶ Intru în Aplicație
             </button>
-            <p class="login-hint">⚠️ Cod-ul este sensibil la majuscule. Folosește oricand același cod pentru a vedea proiectele tale.</p>
+            <p class="login-hint">⚠️ Numele + PIN sunt sensibile la majuscule. Folosește mereu aceleași pentru a vedea proiectele tale.</p>
         </div>
     </div>
 

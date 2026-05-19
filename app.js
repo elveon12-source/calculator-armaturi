@@ -24,25 +24,28 @@ let deferredPrompt;
 // ========================
 // MULTI-USER MANAGEMENT
 // ========================
+// currentUser = display name only (shown in badge)
+// currentUserKey = name_pin (used for storage isolation)
 let currentUser = null;
+let currentUserKey = null;
 let editingProjectId = null;
 
 function getUserStorageKey() {
-    return currentUser ? `arm_projects_${currentUser}` : 'arm_projects';
+    return currentUserKey ? `arm_projects_${currentUserKey}` : 'arm_projects';
 }
 
 function getUserCloudCollection() {
-    return currentUser ? `arm_projects_${currentUser}` : 'arm_projects';
+    return currentUserKey ? `arm_projects_${currentUserKey}` : 'arm_projects';
 }
 
 function initUserSession() {
-    const saved = localStorage.getItem('arm_current_user');
-    if (saved && saved.trim()) {
-        currentUser = saved.trim();
+    const savedName = localStorage.getItem('arm_current_user');
+    const savedPin  = localStorage.getItem('arm_current_pin');
+    if (savedName && savedName.trim() && savedPin && savedPin.trim()) {
+        currentUser    = savedName.trim();
+        currentUserKey = savedName.trim() + '_' + savedPin.trim();
         hideLoginOverlay();
         updateUserBadge();
-        // Restart cloud sync with correct user collection
-        // Use a small delay to allow Firebase to finish initializing
         setTimeout(() => {
             if (db) {
                 cloudReady = true;
@@ -73,46 +76,65 @@ function hideLoginOverlay() {
 }
 
 function confirmLogin() {
-    const inp = document.getElementById('loginUsernameInput');
-    if (!inp) return;
-    const name = inp.value.trim();
+    const nameInp = document.getElementById('loginUsernameInput');
+    const pinInp  = document.getElementById('loginPinInput');
+    if (!nameInp || !pinInp) return;
+
+    const name = nameInp.value.trim();
+    const pin  = pinInp.value.trim();
+
+    // Validate name
     if (!name || name.length < 1) {
-        inp.style.borderColor = '#ef4444';
-        inp.placeholder = 'Introdu un nume / cod valid!';
-        setTimeout(() => {
-            inp.style.borderColor = '';
-            inp.placeholder = 'Ex: Ion, Echipa1, ELV...';
-        }, 2000);
+        nameInp.style.borderColor = '#ef4444';
+        nameInp.placeholder = 'Introdu un nume valid!';
+        setTimeout(() => { nameInp.style.borderColor = ''; nameInp.placeholder = 'Numele tău (ex: Ion, Lucian, Echipa1)'; }, 2000);
         return;
     }
+    // Validate PIN (4-6 digits)
+    if (!pin || !/^\d{4,6}$/.test(pin)) {
+        pinInp.style.borderColor = '#ef4444';
+        pinInp.value = '';
+        pinInp.placeholder = 'PIN invalid! (4-6 cifre)';
+        setTimeout(() => { pinInp.style.borderColor = ''; pinInp.placeholder = 'Cod PIN (4-6 cifre)'; }, 2500);
+        pinInp.focus();
+        return;
+    }
+
+    currentUser    = name;
+    currentUserKey = name + '_' + pin;
     localStorage.setItem('arm_current_user', name);
-    currentUser = name;
+    localStorage.setItem('arm_current_pin',  pin);
+
     hideLoginOverlay();
     updateUserBadge();
     renderHistory();
-    // Start cloud sync for this user (restart if already running)
     if (db) {
         cloudReady = true;
         updateCloudUI('connected');
         initCloudSync();
     }
-    showToast(`Bun venit, ${name}!`);
+    showToast(`Bun venit, ${name}! 🔐`);
 }
 
 function switchUser() {
-    if (!confirm(`Ești sigur că vrei să schimbi utilizatorul?\n\nProiectele tale sunt salvate și vei putea reveni cu același cod.`)) return;
+    if (!confirm(`Ești sigur că vrei să schimbi utilizatorul?\n\nProiectele tale sunt salvate și vei putea reveni cu același Nume + PIN.`)) return;
     localStorage.removeItem('arm_current_user');
-    currentUser = null;
+    localStorage.removeItem('arm_current_pin');
+    currentUser    = null;
+    currentUserKey = null;
     editingProjectId = null;
     cancelEditProject();
     showLoginOverlay();
-    const inp = document.getElementById('loginUsernameInput');
-    if (inp) inp.value = '';
+    const nameInp = document.getElementById('loginUsernameInput');
+    const pinInp  = document.getElementById('loginPinInput');
+    if (nameInp) nameInp.value = '';
+    if (pinInp)  pinInp.value  = '';
 }
 
 function updateUserBadge() {
     const badge = document.getElementById('userBadgeText');
     if (badge && currentUser) {
+        // Show display name only (not PIN)
         badge.textContent = currentUser;
     }
 }

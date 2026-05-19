@@ -1422,8 +1422,9 @@ function saveCurrentProject() {
           .then(() => {
               projects.push(projObj);
               localStorage.setItem(getUserStorageKey(), JSON.stringify(projects));
-              showToast('Salvat în Cloud și Local!');
+              showToast('✅ Salvat în Cloud și Local!');
               renderHistory();
+              resetForNewProject();
           })
           .catch(() => saveLocalOnly(projObj, projects));
     } else {
@@ -1434,8 +1435,30 @@ function saveCurrentProject() {
 function saveLocalOnly(newProj, projects) {
     projects.push(newProj);
     localStorage.setItem(getUserStorageKey(), JSON.stringify(projects));
-    showToast('Proiect salvat local!');
+    showToast('✅ Proiect salvat local!');
     renderHistory();
+    resetForNewProject();
+}
+
+/**
+ * Clears all tables and form fields after saving a project.
+ * Allows immediately starting a new project without manual cleanup.
+ */
+function resetForNewProject() {
+    // Clear all table data
+    Object.keys(tableData).forEach(k => { tableData[k] = []; });
+    // Reset row counters
+    Object.keys(rowCounters).forEach(k => { rowCounters[k] = 0; });
+    // Clear project form fields
+    ['projName', 'projClient', 'projCUI', 'projAdresa'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    // Re-render all tables (now empty)
+    Object.keys(tableData).forEach(t => { try { renderTable(t); } catch(e) {} });
+    // Recalculate totals (will show 0)
+    try { updateGrandTotal(); } catch(e) {}
+    try { saveToLocalStorage(); } catch(e) {}
 }
 
 let openHistoryDetailsId = null;

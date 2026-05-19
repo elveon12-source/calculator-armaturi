@@ -1074,11 +1074,40 @@ async function exportAllToExcel() {
 function printToPDF() {
     const style = document.createElement('style');
     style.innerHTML = `
+        @page {
+            margin: 15mm 12mm 15mm 12mm;
+            size: A4 portrait;
+        }
         @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #1e293b; background: #fff; padding: 12mm; font-family: 'Segoe UI', Arial, sans-serif; }
-            
+            /* Reset everything that's not the print area */
+            html, body {
+                height: auto !important;
+                overflow: visible !important;
+                background: #fff !important;
+            }
+            /* Hide ALL page elements by default */
+            body > *:not(#print-area) {
+                display: none !important;
+            }
+            /* Also explicitly hide fixed/sticky elements that can create phantom pages */
+            nav, header, footer, .summary-footer, #summaryFooter,
+            .tab-nav, #loginOverlay, #editModeTopBanner,
+            .toast-container, [id^="tabIndicator"] {
+                display: none !important;
+            }
+
+            #print-area {
+                display: block !important;
+                position: static !important;
+                left: 0; top: 0;
+                width: 100%;
+                color: #1e293b;
+                background: #fff;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                padding: 0;
+                margin: 0;
+            }
+
             .print-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1e40af; padding-bottom: 10px; margin-bottom: 20px; }
             .logo-container { width: 60px; height: 60px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
             .logo-container img { width: 100%; height: auto; }
@@ -1086,23 +1115,25 @@ function printToPDF() {
             .header-info h1 { margin: 0; color: #1e40af; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
             .header-info p { margin: 2px 0 0 0; color: #64748b; font-size: 11px; }
 
-            .section-title { background: #1e3a8a !important; color: #ffffff !important; padding: 5px 12px; font-weight: bold; font-size: 11px; text-transform: uppercase; margin-top: 15px; margin-bottom: 0; border-radius: 4px 4px 0 0; -webkit-print-color-adjust: exact; }
-            
-            table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
-            th { background: #f8fafc !important; color: #475569 !important; font-weight: bold; text-transform: uppercase; font-size: 10px; padding: 6px 4px; border: 1px solid #e2e8f0; -webkit-print-color-adjust: exact; }
-            td { padding: 4px 4px; text-align: center; font-size: 10.5px; border: 1px solid #e2e8f0; color: #1e293b; }
-            
-            tr:nth-child(even) { background: #fdfdfd !important; -webkit-print-color-adjust: exact; }
-            
-            .group-total-row { background: #eff6ff !important; font-weight: bold; color: #1e40af !important; -webkit-print-color-adjust: exact; font-size: 10.5px; }
+            .section-title { background: #1e3a8a !important; color: #ffffff !important; padding: 5px 12px; font-weight: bold; font-size: 11px; text-transform: uppercase; margin-top: 15px; margin-bottom: 0; border-radius: 4px 4px 0 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            table { width: 100%; border-collapse: collapse; margin-bottom: 0; page-break-inside: auto; }
+            thead { display: table-header-group; }
+            th { background: #f8fafc !important; color: #475569 !important; font-weight: bold; text-transform: uppercase; font-size: 10px; padding: 6px 4px; border: 1px solid #e2e8f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            td { padding: 4px; text-align: center; font-size: 10.5px; border: 1px solid #e2e8f0; color: #1e293b; }
+
+            tr:nth-child(even) { background: #fdfdfd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            tr { page-break-inside: avoid; }
+
+            .group-total-row { background: #eff6ff !important; font-weight: bold; color: #1e40af !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 10.5px; }
             .group-total-row td { border-top: 1.5px solid #1e40af; padding: 6px 4px; }
 
-            .grand-summary { margin-top: 30px; background: #f8fafc; border: 2px solid #1e40af; border-radius: 6px; padding: 15px; page-break-inside: avoid; }
+            .grand-summary { margin-top: 20px; background: #f8fafc; border: 2px solid #1e40af; border-radius: 6px; padding: 15px; page-break-inside: avoid; }
             .grand-summary h2 { margin: 0 0 10px 0; font-size: 16px; color: #1e40af; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
             .summary-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #cbd5e1; font-size: 11px; }
             .summary-item:last-child { border-bottom: none; font-size: 15px; font-weight: bold; color: #1e40af; padding-top: 8px; }
-            
-            .footer { margin-top: 40px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+
+            .footer { margin-top: 20px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; page-break-after: avoid; }
         }
     `;
     document.head.appendChild(style);

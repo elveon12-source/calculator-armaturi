@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     initParticles();
     initPWA();
+    loadPrices();
     loadFromLocalStorage();
     loadOwnSettings();
     renderHistory();
@@ -554,8 +555,83 @@ function recalcAll() {
     saveToLocalStorage();
 }
 
-function getPretKg() {
-    return parseFloat(document.getElementById('pretKg').value) || 5.5;
+// ========================
+// PER-CATEGORY PRICE SYSTEM
+// ========================
+const PRICE_CATEGORIES = [
+    { key: 'etrieri',     label: 'Etrieri (fasonat)' },
+    { key: 'agrafe',      label: 'Agrafe (fasonat)' },
+    { key: 'arcade',      label: 'Arcade (țeavă)' },
+    { key: 'profileU',    label: 'Profile U (fasonat)' },
+    { key: 'bare',        label: 'Bare drepte' },
+    { key: 'sarma',       label: 'Sârmă' },
+    { key: 'tabla',       label: 'Tablă' },
+    { key: 'cornier',     label: 'Cornier' },
+    { key: 'personalizat',label: 'Personalizat' },
+];
+
+let categoryPrices = {};
+
+function loadPrices() {
+    try {
+        const saved = localStorage.getItem('arm_prices');
+        categoryPrices = saved ? JSON.parse(saved) : {};
+    } catch(e) { categoryPrices = {}; }
+    // Fill defaults for missing categories
+    PRICE_CATEGORIES.forEach(c => {
+        if (!categoryPrices[c.key]) categoryPrices[c.key] = 5.50;
+    });
+}
+
+function savePrices() {
+    PRICE_CATEGORIES.forEach(c => {
+        const el = document.getElementById(`price_${c.key}`);
+        if (el) categoryPrices[c.key] = parseFloat(el.value) || 5.50;
+    });
+    localStorage.setItem('arm_prices', JSON.stringify(categoryPrices));
+    recalcAll();
+    showToast('✅ Prețuri salvate!');
+    document.getElementById('pricesPanel').style.display = 'none';
+}
+
+function renderPricesPanel() {
+    const list = document.getElementById('pricesList');
+    if (!list) return;
+    list.innerHTML = PRICE_CATEGORIES.map(c => `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; gap:10px;">
+            <label style="font-size:12px; color:#94a3b8; flex:1;">${c.label}</label>
+            <div style="display:flex; align-items:center; gap:4px;">
+                <input type="number" id="price_${c.key}" value="${(categoryPrices[c.key]||5.50).toFixed(2)}"
+                    step="0.10" min="0"
+                    style="width:70px; background:#1e293b; border:1px solid rgba(255,255,255,0.15);
+                           border-radius:6px; color:#f1f5f9; padding:4px 6px; font-size:13px; font-weight:700; text-align:right;"
+                    onkeydown="if(event.key==='Enter') savePrices()">
+                <span style="font-size:11px; color:#64748b;">lei/kg</span>
+            </div>
+        </div>`).join('');
+}
+
+function togglePricesPanel() {
+    const panel = document.getElementById('pricesPanel');
+    if (!panel) return;
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) renderPricesPanel();
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', e => {
+    const panel = document.getElementById('pricesPanel');
+    const btn   = document.getElementById('btnPrices');
+    if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+        panel.style.display = 'none';
+    }
+});
+
+function getPretKg(category) {
+    if (category && categoryPrices[category] !== undefined) return categoryPrices[category];
+    // fallback to first category price or 5.5
+    return categoryPrices['etrieri'] || 5.50;
 }
 
 // ========================
@@ -644,7 +720,7 @@ function calcEtrieri() {
     const c = parseFloat(document.getElementById('etrCioc').value) || 0;
     const n = parseInt(document.getElementById('etrBuc').value) || 0;
     const lb = (2*(A+B) + 2*c)/100; const lt = lb*n; const gs = greutateSpecifica(d);
-    const gt = lt*gs; const p = gt*getPretKg();
+    const gt = lt*gs; const p = gt*getPretKg('etrieri');
     animateValue('etrLungBuc', lb.toFixed(2)); animateValue('etrLungTot', lt.toFixed(2));
     animateValue('etrGSp', gs.toFixed(3)); animateValue('etrGTot', gt.toFixed(2)); animateValue('etrPret', p.toFixed(2));
     updateDimText('dimEtrierA', A); updateDimText('dimEtrierB', B); updateDimText('dimEtrierCioc', c); updateDimText('dimEtrierDiam', d);
@@ -656,7 +732,7 @@ function calcAgrafe() {
     const c = parseFloat(document.getElementById('agrCioc').value) || 0;
     const n = parseInt(document.getElementById('agrBuc').value) || 0;
     const lb = (L + 2*c)/100; const lt = lb*n; const gs = greutateSpecifica(d);
-    const gt = lt*gs; const p = gt*getPretKg();
+    const gt = lt*gs; const p = gt*getPretKg('agrafe');
     animateValue('agrLungBuc', lb.toFixed(2)); animateValue('agrLungTot', lt.toFixed(2));
     animateValue('agrGSp', gs.toFixed(3)); animateValue('agrGTot', gt.toFixed(2)); animateValue('agrPret', p.toFixed(2));
     updateDimText('dimAgrafaL', L); updateDimText('dimAgrafaCioc', c); updateDimText('dimAgrafaCioc2', c); updateDimText('dimAgrafaDiam', d);
@@ -671,7 +747,7 @@ function calcArcade() {
     const hLeg = Math.max(0, H - (D/2));
     const lb = (Math.PI*(D/2) + 2*hLeg)/100; const lt = lb*n; 
     const gs = (dExt - gros) * gros * 0.0246615;
-    const gt = lt*gs; const p = gt*getPretKg();
+    const gt = lt*gs; const p = gt*getPretKg('arcade');
     animateValue('arcLungBuc', lb.toFixed(2)); animateValue('arcLungTot', lt.toFixed(2));
     animateValue('arcGSp', gs.toFixed(3)); animateValue('arcGTot', gt.toFixed(2));
     animateValue('arcPret', p.toFixed(2));
@@ -686,7 +762,7 @@ function calcProfileU() {
     const C = parseFloat(document.getElementById('profilUC').value) || 0;
     const n = parseInt(document.getElementById('profilUBuc').value) || 0;
     const lb = (A+B+C)/100; const lt = lb*n; const gs = greutateSpecifica(d);
-    const gt = lt*gs; const p = gt*getPretKg();
+    const gt = lt*gs; const p = gt*getPretKg('profileU');
     animateValue('profilULungBuc', lb.toFixed(2)); animateValue('profilULungTot', lt.toFixed(2));
     animateValue('profilUGSp', gs.toFixed(3)); animateValue('profilUGTot', gt.toFixed(2)); animateValue('profilUPret', p.toFixed(2));
     updateDimText('dimProfilUA', A); updateDimText('dimProfilUB', B); updateDimText('dimProfilUC', C); updateDimText('dimProfilUDiam', d);
@@ -697,7 +773,7 @@ function calcBare() {
     const L = parseFloat(document.getElementById('barL').value) || 0;
     const n = parseInt(document.getElementById('barBuc').value) || 0;
     const lb = L/100; const lt = lb*n; const gs = greutateSpecificaBare(d);
-    const gt = lt*gs; const p = gt*getPretKg();
+    const gt = lt*gs; const p = gt*getPretKg('bare');
     animateValue('barLungBuc', lb.toFixed(2)); animateValue('barLungTot', lt.toFixed(2));
     animateValue('barGSp', gs.toFixed(3)); animateValue('barGTot', gt.toFixed(2)); animateValue('barPret', p.toFixed(2));
     updateDimText('dimBaraL', L); updateDimText('dimBaraDiam', d);
@@ -707,7 +783,7 @@ function calcSarma() {
     const dStr = document.getElementById('sarDiam').value;
     const L = parseFloat(document.getElementById('sarL').value) || 0;
     const n = parseInt(document.getElementById('sarBuc').value) || 0;
-    const gs = weightsSarma[dStr] || 0; const gt = L * n * gs; const p = gt * getPretKg();
+    const gs = weightsSarma[dStr] || 0; const gt = L * n * gs; const p = gt * getPretKg('sarma');
     animateValue('sarGSp', gs.toFixed(3)); animateValue('sarMassBuc', (L*gs).toFixed(2));
     animateValue('sarGTot', gt.toFixed(2)); animateValue('sarPret', p.toFixed(2));
 }
@@ -735,7 +811,7 @@ function calcTabla() {
         const s = parseFloat(document.getElementById('tabMp').value) || 0;
         wMp = weightsTablaCutata[m] || 0; mpB = s / n;
     }
-    const gt = wMp * mpB * n; const p = gt * getPretKg();
+    const gt = wMp * mpB * n; const p = gt * getPretKg('tabla');
     animateValue('tabGUnit', wMp.toFixed(2)); animateValue('tabMpBuc', mpB.toFixed(2));
     animateValue('tabGTot', gt.toFixed(2)); animateValue('tabPret', p.toFixed(2));
 }
@@ -744,7 +820,7 @@ function calcCornier() {
     const dim = document.getElementById('corDim').value;
     const L = parseFloat(document.getElementById('corL').value) || 0;
     const n = parseInt(document.getElementById('corBuc').value) || 0;
-    const gs = weightsCornier[dim] || 0; const weightBuc = L * gs; const gt = weightBuc * n; const p = gt * getPretKg();
+    const gs = weightsCornier[dim] || 0; const weightBuc = L * gs; const gt = weightBuc * n; const p = gt * getPretKg('cornier');
     animateValue('corGSp', gs.toFixed(3)); animateValue('corMassBuc', weightBuc.toFixed(2));
     animateValue('corGTot', gt.toFixed(2)); animateValue('corPret', p.toFixed(2));
 }
@@ -753,7 +829,6 @@ function calcCornier() {
 // TABLE ENGINE
 // ========================
 function calcRowValues(type, row) {
-    const pretKg = getPretKg();
     switch(type) {
         case 'etrieri': row.lungBuc = (2*(row.A+row.B) + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
         case 'agrafe': row.lungBuc = (row.L + 2*row.cioc)/100; row.gSp = greutateSpecifica(row.diam); break;
@@ -777,7 +852,7 @@ function calcRowValues(type, row) {
             break;
     }
     if(!['sarma','tabla','cornier'].includes(type)){ row.lungTot = row.lungBuc*row.buc; row.gTot = row.lungTot*row.gSp; }
-    row.gTot = Math.round(row.gTot*100)/100; row.pret = Math.round(row.gTot*pretKg*100)/100;
+    row.gTot = Math.round(row.gTot*100)/100; row.pret = Math.round(row.gTot*getPretKg(type)*100)/100;
 }
 
 function addRow(type) {

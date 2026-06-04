@@ -52,6 +52,8 @@ function initUserSession() {
                 updateCloudUI('connected');
                 initCloudSync();
             }
+            // Admin check for returning users
+            setTimeout(() => checkAdminAccess(), 1000);
         }, 1500);
     } else {
         showLoginOverlay();
@@ -118,6 +120,11 @@ function confirmLogin() {
         initCloudSync();
         // Firestore migration after DB ready
         setTimeout(() => migrateFirestoreOldKey(name, pin), 2000);
+        // Admin check and user registration after Firestore is ready
+        setTimeout(() => {
+            checkAdminAccess();
+            registerUserInRegistry();
+        }, 2500);
     }
     showToast(`Bun venit, ${name}! 🔐`);
 }
@@ -194,6 +201,212 @@ function updateUserBadge() {
         // Show display name only (not PIN)
         badge.textContent = currentUser;
     }
+}
+
+// ========================
+// ADMIN SYSTEM
+// ========================
+let isAdmin = false;
+const ADMIN_CONFIG_DOC = 'arm_config/settings';
+
+/**
+ * Check if currentUser is admin by reading Firestore arm_config/settings.adminKeys
+ * Called after login. Shows/hides the Admin tab.
+ */
+async function checkAdminAccess() {
+    if (!db || !currentUserKey) return;
+    try {
+        const doc = await db.doc(ADMIN_CONFIG_DOC).get();
+        const settings = doc.exists ? doc.data() : {};
+        const adminKeys = settings.adminKeys || [];
+        isAdmin = adminKeys.includes(currentUserKey);
+
+        const tabAdmin = document.getElementById('tabAdmin');
+        if (tabAdmin) tabAdmin.style.display = isAdmin ? '' : 'none';
+
+        // Load global prices for non-admins who have no custom prices
+        if (!isAdmin) loadGlobalPricesIfNeeded(settings.globalPrices);
+
+        // Show broadcast message if any
+        checkBroadcastMessage(settings.appMessage);
+    } catch(e) {
+        console.warn('Admin check failed (offline?):', e);
+        // Fallback: if Firestore unreachable, no admin access
+        isAdmin = false;
+    }
+}
+
+/**
+ * For new users: if they have no custom prices, use global prices from Firestore
+ */
+function loadGlobalPricesIfNeeded(globalPrices) {
+    if (!globalPrices) return;
+    const existing = localStorage.getItem('arm_prices');
+    if (existing) return; // user already has custom prices
+    categoryPrices = { ...globalPrices };
+    localStorage.setItem('arm_prices', JSON.stringify(categoryPrices));
+    recalcAll();
+}
+
+/**
+ * Show a broadcast message from admin (if any) as an info banner
+ */
+function checkBroadcastMessage(msg) {
+    if (!msg || !msg.trim()) return;
+    const existing = sessionStorage.getItem('arm_msg_seen');
+    if (existing === msg) return; // already shown this session
+    sessionStorage.setItem('arm_msg_seen', msg);
+    showToast(`📢 ${msg}`);
+    // Also show as a persistent banner if longer than 60 chars
+    const banner = document.createElement('div');
+    banner.style.cssText = `
+        position:fixed; top:70px; left:50%; transform:translateX(-50%);
+        background:linear-gradient(135deg,#92400e,#78350f); color:#fef3c7;
+        padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600;
+        z-index:5000; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+        display:flex; align-items:center; gap:10px; max-width:90vw;`;
+    banner.innerHTML = `<span>📢 ${msg}</span><button onclick="this.parentElement.remove()"
+        style="background:none;border:none;color:#fef3c7;cursor:pointer;font-size:16px;">✕</button>`;
+    document.body.appendChild(banner);
+    setTimeout(() => { if(banner.parentElement) banner.remove(); }, 10000);
+}
+
+/**
+ * Load and render the admin panel content
+ */
+async function loadAdminPanel() {
+    if (!isAdmin) return;
+
+    // Update admin badge
+    const adminBadge = document.getElementById('adminUserBadge');
+    if (adminBadge) adminBadge.textContent = `Admin: ${currentUser}`;
+
+    // Load current global prices from Firestore
+    try {
+        const doc = await db.doc(ADMIN_CONFIG_DOC).get();
+        const settings = doc.exists ? doc.data() : {};
+        const globalPrices = settings.globalPrices || {};
+
+        // Render global prices list
+        const list = document.getElementById('adminGlobalPricesList');
+        if (list) {
+            list.innerHTML = PRICE_CATEGORIES.map(c => `
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; gap:10px;">
+                    <label style="font-size:12px; color:#94a3b8; flex:1;">${c.label}</label>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <input type="number" id="adminPrice_${c.key}"
+                            value="${(globalPrices[c.key] || categoryPrices[c.key] || 5.50).toFixed(2)}"
+                            step="0.10" min="0"
+                            style="width:80px; background:#1e293b; border:1px solid rgba(255,255,255,0.15);
+                                   border-radius:6px; color:#f1f5f9; padding:4px 8px; font-size:13px; font-weight:700; text-align:right;">
+                        <span style="font-size:11px; color:#64748b;">lei/kg</span>
+                    </div>
+                </div>`).join('');
+        }
+
+        // Load broadcast message
+        const msgEl = document.getElementById('adminBroadcastMsg');
+        if (msgEl) msgEl.value = settings.appMessage || '';
+
+    } catch(e) {
+        showToast('Eroare la încărcarea setărilor admin!');
+    }
+}
+
+/**
+ * Save global prices to Firestore — applies to all new users
+ */
+async function saveGlobalPrices() {
+    if (!isAdmin || !db) return;
+    const globalPrices = {};
+    PRICE_CATEGORIES.forEach(c => {
+        const el = document.getElementById(`adminPrice_${c.key}`);
+        if (el) globalPrices[c.key] = parseFloat(el.value) || 5.50;
+    });
+    try {
+        await db.doc(ADMIN_CONFIG_DOC).set({ globalPrices }, { merge: true });
+        showToast('✅ Prețuri globale salvate în Cloud!');
+    } catch(e) {
+        showToast('❌ Eroare la salvare: ' + e.message);
+    }
+}
+
+/**
+ * Save broadcast message to Firestore — all users see it on next login
+ */
+async function saveBroadcastMessage() {
+    if (!isAdmin || !db) return;
+    const msg = document.getElementById('adminBroadcastMsg')?.value?.trim() || '';
+    try {
+        await db.doc(ADMIN_CONFIG_DOC).set({ appMessage: msg }, { merge: true });
+        showToast(msg ? `📢 Mesaj trimis tuturor utilizatorilor!` : `🔕 Mesaj dezactivat.`);
+    } catch(e) {
+        showToast('❌ Eroare: ' + e.message);
+    }
+}
+
+/**
+ * List all active users from Firestore by scanning collection names
+ */
+async function loadUsersList() {
+    if (!isAdmin || !db) return;
+    const container = document.getElementById('adminUsersList');
+    if (!container) return;
+    container.innerHTML = '<p style="color:#64748b;">Se încarcă...</p>';
+
+    try {
+        // Read user registry from arm_config/users_registry
+        const doc = await db.doc('arm_config/users_registry').get();
+        const registry = doc.exists ? (doc.data().users || []) : [];
+
+        if (registry.length === 0) {
+            container.innerHTML = '<p style="color:#64748b; font-size:13px;">Nu există utilizatori înregistrați în registru. Utilizatorii se înregistrează automat la primul login.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr style="color:#64748b; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <th style="padding:6px;">Utilizator</th>
+                        <th style="padding:6px;">Dispozitiv</th>
+                        <th style="padding:6px;">Ultima activitate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${registry.map(u => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <td style="padding:6px; color:#f1f5f9; font-weight:600;">${u.displayName || u.key}</td>
+                            <td style="padding:6px; color:#94a3b8;">${u.device || '-'}</td>
+                            <td style="padding:6px; color:#64748b;">${u.lastSeen ? new Date(u.lastSeen).toLocaleString('ro-RO') : '-'}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>`;
+    } catch(e) {
+        container.innerHTML = `<p style="color:#ef4444; font-size:13px;">Eroare la încărcare: ${e.message}</p>`;
+    }
+}
+
+/**
+ * Register user in the Firestore users registry (called on login)
+ */
+async function registerUserInRegistry() {
+    if (!db || !currentUser || !currentUserKey) return;
+    try {
+        const registry = db.doc('arm_config/users_registry');
+        const doc = await registry.get();
+        const existing = doc.exists ? (doc.data().users || []) : [];
+        const idx = existing.findIndex(u => u.key === currentUserKey);
+        const entry = {
+            key: currentUserKey,
+            displayName: currentUser,
+            device: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop',
+            lastSeen: Date.now()
+        };
+        if (idx >= 0) existing[idx] = entry;
+        else existing.push(entry);
+        await registry.set({ users: existing }, { merge: true });
+    } catch(e) { /* silent fail */ }
 }
 
 // ========================
@@ -388,26 +601,30 @@ function initPWA() {
     });
 
     if ('serviceWorker' in navigator) {
-        // Register Service Worker with forced versioning
         navigator.serviceWorker.register(`./sw.js?v=102`).then(reg => {
-            console.log('SW Registered [v102]');
-            
-            // Check if there is already a waiting worker
+            console.log('SW Registered - auto-update active');
+
+            // If there's already a waiting SW, activate it immediately
             if (reg.waiting) {
-                showUpdateToast(reg);
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
             }
 
+            // When a new SW is found during this session, activate it immediately
             reg.addEventListener('updatefound', () => {
                 const newWorker = reg.installing;
                 newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        showUpdateToast(reg);
+                    if (newWorker.state === 'installed') {
+                        // Skip waiting → triggers controllerchange → auto reload
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
                     }
                 });
             });
+
+            // Poll for updates every 5 minutes silently
+            setInterval(() => reg.update(), 5 * 60 * 1000);
         });
 
-        // Listen for the controlling service worker changing and reload
+        // When the active SW changes, reload the page automatically
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
@@ -515,25 +732,10 @@ function installPWA() {
     }
 }
 
-function showUpdateToast(registration) {
-    waitingWorker = registration.waiting || registration.installing;
-    const toast = document.getElementById('toast');
-    const toastText = document.getElementById('toastText');
+// showUpdateToast kept for emergencyReset badge only
+function showUpdateToast() {
     const updateBadge = document.getElementById('updateBadge');
-    
     if (updateBadge) updateBadge.style.display = 'inline-flex';
-    if (!toast || !toastText) return;
-    
-    toastText.innerHTML = 'Versiune noua disponibila! <button onclick="activateUpdate()" class="btn-update-toast" style="margin-left:10px; padding:2px 8px; background:#fff; color:#2563eb; border-radius:4px; font-weight:800; border:none; cursor:pointer">Actualizeaza</button>';
-    toast.classList.add('show', 'update-toast');
-    
-    window.activateUpdate = () => {
-        if (registration && registration.waiting) {
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        } else {
-            window.location.reload(true);
-        }
-    };
 }
 
 // ========================
@@ -652,6 +854,7 @@ function initTabs() {
             if (panel) panel.classList.add('active');
             
             if (tabId === 'proiecte') renderHistory();
+            if (tabId === 'admin') loadAdminPanel();
             if (tabId === 'personalizat') {
                 setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
             }

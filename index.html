@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=63">
+    <link rel="stylesheet" href="style.css?v=64">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
@@ -163,6 +163,15 @@
                 </span>
                 <span class="tab-label">Proiecte</span>
             </button>
+
+            <!-- Admin Tab — hidden until isAdmin verified -->
+            <button class="tab-btn" data-tab="admin" id="tabAdmin" style="display:none;
+                background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1));
+                border-color: rgba(239,68,68,0.4); color: #f87171;">
+                <span class="tab-icon">🛡️</span>
+                <span class="tab-label">Admin</span>
+            </button>
+
             <div class="tab-indicator" id="tabIndicator"></div>
         </div>
     </nav>
@@ -1108,6 +1117,82 @@
                 </div>
             </div>
         </section>
+
+        <!-- ======================== ADMIN PANEL ======================== -->
+        <section class="tab-panel" id="panel-admin" style="padding: 20px;">
+            <div style="max-width: 800px; margin: 0 auto;">
+
+                <!-- Header Admin -->
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;
+                    padding:16px; background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.05));
+                    border:1px solid rgba(239,68,68,0.3); border-radius:12px;">
+                    <span style="font-size:32px;">🛡️</span>
+                    <div>
+                        <h2 style="margin:0; color:#f87171; font-size:20px;">Panou Administrare</h2>
+                        <p style="margin:0; color:#94a3b8; font-size:12px;">Acces restricționat — doar administratori</p>
+                    </div>
+                    <div style="margin-left:auto; text-align:right;">
+                        <span id="adminUserBadge" style="font-size:11px; color:#64748b; background:#1e293b; padding:4px 10px; border-radius:20px;"></span>
+                    </div>
+                </div>
+
+                <!-- Secțiunea: Prețuri Globale -->
+                <div class="calc-card" style="margin-bottom:20px;">
+                    <div class="card-header">
+                        <h3>💰 Prețuri Globale (default pentru toți utilizatorii)</h3>
+                        <span class="badge badge-blue">Firestore Sync</span>
+                    </div>
+                    <div class="calc-form">
+                        <p style="font-size:12px; color:#64748b; margin-bottom:14px;">
+                            Aceste prețuri sunt folosite ca <strong>valori implicite</strong> pentru utilizatorii noi sau cei care nu și-au setat prețuri proprii.
+                            Utilizatorii cu prețuri personalizate nu sunt afectați.
+                        </p>
+                        <div id="adminGlobalPricesList" style="margin-bottom:12px;"></div>
+                        <div style="display:flex; gap:10px; margin-top:4px;">
+                            <button class="btn-add" onclick="saveGlobalPrices()" style="flex:1; background:linear-gradient(135deg,#10b981,#059669);">
+                                💾 Salvează și Sincronizează în Cloud
+                            </button>
+                            <button class="btn-add" onclick="loadAdminPanel()" style="background:#334155; border:none;">
+                                🔄 Reîncarcă
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secțiunea: Mesaj Broadcast -->
+                <div class="calc-card" style="margin-bottom:20px;">
+                    <div class="card-header">
+                        <h3>📢 Mesaj Global (vizibil pentru toți utilizatorii)</h3>
+                        <span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24;">Broadcast</span>
+                    </div>
+                    <div class="calc-form">
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label>Mesaj (lasă gol pentru a dezactiva)</label>
+                                <input type="text" id="adminBroadcastMsg"
+                                    placeholder="Ex: Prețurile s-au actualizat de la 01.06.2026" maxlength="200">
+                            </div>
+                        </div>
+                        <button class="btn-add" onclick="saveBroadcastMessage()" style="width:100%; margin-top:8px; background:linear-gradient(135deg,#f59e0b,#d97706);">
+                            📤 Trimite Mesaj Tuturor
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Secțiunea: Utilizatori Activi -->
+                <div class="calc-card">
+                    <div class="card-header">
+                        <h3>👥 Utilizatori Activi</h3>
+                        <button class="btn-add" onclick="loadUsersList()" style="padding:4px 12px; font-size:12px;">🔄 Reîncarcă</button>
+                    </div>
+                    <div id="adminUsersList" style="padding:12px;">
+                        <p style="color:#64748b; font-size:13px;">Apasă Reîncarcă pentru a vedea utilizatorii activi din Cloud.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
     </main>
 
     <!-- Summary Footer -->
